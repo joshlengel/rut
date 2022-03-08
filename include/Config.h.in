@@ -1,0 +1,6 @@
+#cmakedefine RUT_HAS_X11
+#cmakedefine RUT_HAS_WIN32
+
+#cmakedefine RUT_HAS_GLX
+#cmakedefine RUT_HAS_EGL
+#cmakedefine RUT_HAS_OPENGL

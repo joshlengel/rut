@@ -1,0 +1,80 @@
+cmake_minimum_required(VERSION 3.0)
+
+project(rut VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+set(RUT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(RUT_INCLUDE ${RUT_ROOT}/include)
+set(RUT_SRC ${RUT_ROOT}/src)
+set(RUT_LIB ${RUT_ROOT}/lib)
+set(RUT_DEPS ${RUT_ROOT}/deps)
+set(RUT_CMAKE ${RUT_ROOT}/cmake)
+set(RUT_EXAMPLE ${RUT_ROOT}/example)
+
+set(CMAKE_MODULE_PATH ${RUT_CMAKE})
+
+# build
+set(LIBRARY_OUTPUT_PATH ${RUT_LIB})
+file(GLOB_RECURSE sources "${RUT_INCLUDE}/*.h" "${RUT_SRC}/*.h" "${RUT_SRC}/*.cpp")
+add_library(rut ${sources})
+target_include_directories(rut PUBLIC ${RUT_INCLUDE})
+target_include_directories(rut PRIVATE ${RUT_SRC})
+target_link_libraries(rut PUBLIC glm)
+
+# deps
+add_subdirectory(${RUT_DEPS}/glm)
+
+# Windows
+if (WIN32)
+    message("-- Using Win32")
+    set(RUT_HAS_WIN32 True)
+    set(RUT_HAS_OPENGL True)
+    set(RUT_HAS_WGL True)
+    set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} opengl32)
+else ()
+    find_package(X11)
+    if (X11_FOUND)
+        message("-- X11: Found")
+        set(RUT_HAS_X11 True)
+        set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} X11)
+    else ()
+        message("-- X11: Not found")
+    endif ()
+
+    set(OpenGL_GL_PREFERENCE GLVND)
+    find_package(OpenGL)
+    if (OpenGL_OpenGL_FOUND)
+        message("-- OpenGL: Found")
+        set(RUT_HAS_OPENGL True)
+        set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} OpenGL::OpenGL)
+    else ()
+        message("-- OpenGL: Not found")
+    endif ()
+
+    if (OpenGL_GLX_FOUND)
+        message("-- GLX: Found")
+        set(RUT_HAS_GLX True)
+        set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} OpenGL::GLX)
+    else ()
+        message("-- GLX: Not found")
+    endif ()
+
+    if (OpenGL_EGL_FOUND)
+        message("-- EGL: Found")
+        set(RUT_HAS_EGL True)
+        set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} OpenGL::EGL)
+    else ()
+        message("-- EGL: Not found")
+    endif ()
+endif ()
+
+configure_file(${RUT_INCLUDE}/Config.h.in ${RUT_INCLUDE}/RUT/Config.h)
+target_link_libraries(rut PRIVATE ${RUT_ADDITIONAL_LIBS})
+
+# example
+set(RUT_BUILD_EXAMPLE True)
+if (RUT_BUILD_EXAMPLE)
+    add_subdirectory(${RUT_EXAMPLE})
+endif (RUT_BUILD_EXAMPLE)
