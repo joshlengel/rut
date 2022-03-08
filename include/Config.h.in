@@ -3,4 +3,8 @@
 
 #cmakedefine RUT_HAS_GLX
 #cmakedefine RUT_HAS_EGL
+#cmakedefine RUT_HAS_WGL
+
 #cmakedefine RUT_HAS_OPENGL
+#cmakedefine RUT_HAS_VULKAN
+#cmakedefine RUT_HAS_DX11

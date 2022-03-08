@@ -1,5 +1,8 @@
 #include"RUT/Mesh.h"
 #include"RUT/Config.h"
+#include"RUT/Api.h"
+
+#include<stdexcept>
 
 static const uint32_t VERTEX_TYPE_BYTES[] =
 {
@@ -66,15 +69,32 @@ namespace rut
 
 #ifdef RUT_HAS_OPENGL
 #include"impl/OpenGL/OpenGLMesh.h"
+#endif
 
 std::shared_ptr<rut::Mesh> rut::Mesh::Create(Context *context, const rut::VertexLayout &layout)
 {
-    return std::make_shared<rut::impl::OpenGLMesh>(context, layout);
+    switch (Api::GetRenderApi())
+    {
+    case RENDER_API_NONE:
+        throw std::runtime_error("Error creating mesh. RENDER_API_NONE selected");
+
+#ifdef RUT_HAS_OPENGL
+    case RENDER_API_OPENGL:
+        return std::make_shared<rut::impl::OpenGLMesh>(context, layout);
+#endif
+    }
 }
 
 std::shared_ptr<rut::Mesh> rut::Mesh::Create(Context *context, rut::VertexLayout &&layout)
 {
-    return std::make_shared<rut::impl::OpenGLMesh>(context, std::move(layout));
-}
+    switch (Api::GetRenderApi())
+    {
+    case RENDER_API_NONE:
+        throw std::runtime_error("Error creating mesh. RENDER_API_NONE selected");
 
+#ifdef RUT_HAS_OPENGL
+    case RENDER_API_OPENGL:
+        return std::make_shared<rut::impl::OpenGLMesh>(context, std::move(layout));
 #endif
+    }
+}

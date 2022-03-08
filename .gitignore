@@ -1,7 +1,7 @@
 # build
 /build
 /lib
-/example/rut_example
+/example/rut_example*
 
 # config
 /include/RUT/Config.h
