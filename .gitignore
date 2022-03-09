@@ -2,6 +2,7 @@
 /build
 /lib
 /example/rut_example*
+/src/impl/api
 
 # config
 /include/RUT/Config.h

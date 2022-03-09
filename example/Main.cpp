@@ -61,7 +61,7 @@ public:
         std::cout << "Context version: " << m_window->GetContext()->GetVersionMajor() << "." << m_window->GetContext()->GetVersionMinor() << std::endl;
 
         // Setup mesh
-        /*m_mesh = rut::Mesh::Create(m_window->GetContext(),
+        m_mesh = rut::Mesh::Create(m_window->GetContext(),
             {
                 { "position", rut::VT_FVEC2 }
             }
@@ -82,7 +82,7 @@ public:
         // Setup renderer
         rut::RendererProperties renderer_props;
         renderer_props.shader = m_shader;
-        m_renderer = rut::Renderer::Create(m_window->GetContext(), renderer_props);*/
+        m_renderer = rut::Renderer::Create(m_window->GetContext(), renderer_props);
 
         // Show window
         m_window->Show();
@@ -92,13 +92,13 @@ public:
 
     void Update()
     {
-       /* if (m_window->KeyDown(rut::KC_ESCAPE))
+       if (m_window->KeyDown(rut::KC_ESCAPE))
             m_should_close = true;
         
         // Render
         m_renderer->Begin();
         m_renderer->Render(m_mesh);
-        m_renderer->End();*/
+        m_renderer->End();
 
         m_window->Update();
     }

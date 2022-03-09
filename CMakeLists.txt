@@ -20,7 +20,7 @@ set(LIBRARY_OUTPUT_PATH ${RUT_LIB})
 file(GLOB_RECURSE sources "${RUT_INCLUDE}/*.h" "${RUT_SRC}/*.h" "${RUT_SRC}/*.cpp")
 add_library(rut ${sources})
 target_include_directories(rut PUBLIC ${RUT_INCLUDE})
-target_include_directories(rut PRIVATE ${RUT_SRC})
+target_include_directories(rut PRIVATE ${RUT_SRC} ${RUT_SRC}/impl/api)
 target_link_libraries(rut PUBLIC glm)
 
 # deps
@@ -46,8 +46,17 @@ if (WIN32)
     if (OpenGL_OpenGL_FOUND)
         message("-- OpenGL: Found")
         message("-- WGL: Found")
-        set(RUT_HAS_OPENGL False)
+        set(RUT_HAS_OPENGL True)
         set(RUT_HAS_WGL True)
+
+        # download spec
+        if (NOT EXISTS ${RUT_SRC}/impl/api/GL/glext.h)
+            file(DOWNLOAD http://www.khronos.org/registry/OpenGL/api/GL/glext.h ${RUT_SRC}/impl/api/GL/glext.h)
+        endif ()
+        if (NOT EXISTS ${RUT_SRC}/impl/api/KHR/khrplatform.h)
+            file(DOWNLOAD http://www.khronos.org/registry/EGL/api/KHR/khrplatform.h ${RUT_SRC}/impl/api/KHR/khrplatform.h)
+        endif ()
+        
         set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} OpenGL::GL)
     else ()
         message("-- OpenGL: Not found")

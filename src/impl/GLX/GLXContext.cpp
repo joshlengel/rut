@@ -2,6 +2,8 @@
 
 #ifdef RUT_HAS_GLX
 
+#include"impl/OpenGL/OpenGLUtils.h"
+
 #include<stdexcept>
 
 #include<X11/Xutil.h>
@@ -23,6 +25,8 @@ namespace rut
             XVisualInfo *visual = glXChooseVisual(m_display, screen, attrib_list);
             m_context = glXCreateContext(display, visual, 0, true);
             glXMakeCurrent(m_display, window, m_context);
+
+            LoadOpenGLFunctions(reinterpret_cast<LoadProc>(&glXGetProcAddress));
 
             GLint major, minor;
             glGetIntegerv(GL_MAJOR_VERSION, &major);

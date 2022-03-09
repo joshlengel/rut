@@ -2,10 +2,7 @@
 
 #ifdef RUT_HAS_WGL
 
-#include<gl/GL.h>
-
-#define GL_MAJOR_VERSION 33307
-#define GL_MINOR_VERSION 33308
+#include"impl/OpenGL/OpenGLUtils.h"
 
 #include<string>
 #include<stdexcept>
@@ -45,6 +42,8 @@ namespace rut
             if (!m_context)
                 throw std::runtime_error("Error creating WGL context: " + std::to_string(GetLastError()));
             wglMakeCurrent(m_device, m_context);
+
+            LoadOpenGLFunctions(reinterpret_cast<LoadProc>(&wglGetProcAddress));
 
             GLint major, minor;
             glGetIntegerv(GL_MAJOR_VERSION, &major);

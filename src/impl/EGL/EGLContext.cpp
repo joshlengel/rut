@@ -2,7 +2,7 @@
 
 #ifdef RUT_HAS_EGL
 
-#include<GL/gl.h>
+#include"impl/OpenGL/OpenGLUtils.h"
 
 #include<stdexcept>
 
@@ -71,6 +71,8 @@ namespace rut
                 throw std::runtime_error("Error creating EGL context: " + std::to_string(eglGetError()));
             
             eglMakeCurrent(m_egl_data->display, m_egl_data->surface, m_egl_data->surface, m_egl_data->context);
+
+            LoadOpenGLFunctions(reinterpret_cast<LoadProc>(&eglGetProcAddress));
 
             GLint major, minor;
             glGetIntegerv(GL_MAJOR_VERSION, &major);
