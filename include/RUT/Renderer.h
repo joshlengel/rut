@@ -2,6 +2,8 @@
 
 #include<memory>
 
+#include<glm/vec4.hpp>
+
 namespace rut
 {
     class Mesh;
@@ -36,11 +38,18 @@ namespace rut
         bool enable_write = false;
     };
 
+    struct ClearProperties
+    {
+        glm::vec4 clear_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        float clear_depth = 1.0f;
+    };
+
     struct RendererProperties
     {
         CullMode cull_mode = CM_NONE;
         BlendMode blend_mode = BM_NONE;
         DepthProperties depth_props;
+        ClearProperties clear_props;
 
         std::shared_ptr<ShaderProgram> shader;
     };

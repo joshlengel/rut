@@ -85,6 +85,11 @@ namespace rut
                 }
             }
 
+            const glm::vec4 &clear_color = m_props.clear_props.clear_color;
+            glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
+            glClearDepth(m_props.clear_props.clear_depth);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
             glUseProgram(static_cast<GLuint>(m_props.shader->GetHandle()));
         }
 

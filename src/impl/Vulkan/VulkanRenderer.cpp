@@ -7,6 +7,7 @@
 #include"VulkanMesh.h"
 
 #include<stdexcept>
+#include<cstring>
 
 static const VkCullModeFlagBits CULL_MODE_TO_BITS[] =
 {
@@ -217,7 +218,7 @@ namespace rut
         VulkanRenderer::~VulkanRenderer()
         {
             vkDeviceWaitIdle(m_data->device);
-            
+
             if (m_have_pipline)
             {
                 vkDestroyPipeline(m_data->device, m_pipeline, nullptr);
@@ -250,9 +251,11 @@ namespace rut
             render_pass_begin_info.renderArea.offset = {0, 0};
             render_pass_begin_info.renderArea.extent = m_data->swapchain_extent;
             
-            VkClearValue clearColor = {{{ 0.0f, 0.0f, 0.0f, 1.0f }}};
+            //! TODO: make dependent on framebuffer being rendered to
+            VkClearValue clear_value;
+            std::memcpy(clear_value.color.float32, &m_props.clear_props.clear_color[0], 4 * sizeof(float));
             render_pass_begin_info.clearValueCount = 1;
-            render_pass_begin_info.pClearValues = &clearColor;
+            render_pass_begin_info.pClearValues = &clear_value;
 
             vkCmdBeginRenderPass(m_data->cmd_buffers[m_data->current_frame], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
             vkCmdBindPipeline(m_data->cmd_buffers[m_data->current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);

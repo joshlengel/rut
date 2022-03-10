@@ -95,8 +95,8 @@ public:
 
         // Setup shader
         rut::ShaderProgramProperties shader_props;
-        shader_props.vertex_shader = rut::ShaderUnit::Create(m_window->GetContext(), rut::ST_VERTEX, VERTEX_SOURCE_GL);
-        shader_props.fragment_shader = rut::ShaderUnit::Create(m_window->GetContext(), rut::ST_FRAGMENT, FRAGMENT_SOURCE_GL);
+        shader_props.vertex_shader = rut::ShaderUnit::Create(m_window->GetContext(), rut::ST_VERTEX, VERTEX_SOURCE_VK);
+        shader_props.fragment_shader = rut::ShaderUnit::Create(m_window->GetContext(), rut::ST_FRAGMENT, FRAGMENT_SOURCE_VK);
         shader_props.layout =
         {
             { "position", rut::VT_FVEC2 }
@@ -143,8 +143,8 @@ private:
 int main()
 {
     rut::Api::ChooseDefaults();
-    rut::Api::SetContextApi(rut::CONTEXT_API_EGL);
-    rut::Api::SetRenderApi(rut::RENDER_API_OPENGL);
+    rut::Api::SetContextApi(rut::CONTEXT_API_KHR_SURFACE);
+    rut::Api::SetRenderApi(rut::RENDER_API_VULKAN);
     rut::Api::CheckCompatibility();
     rut::Api::PrintInfo();
 
