@@ -13,7 +13,7 @@ namespace rut
     {
         WGLContext::WGLContext(HWND window)
         {
-            m_device = GetDC(window);
+            m_data.device = GetDC(window);
 
             PIXELFORMATDESCRIPTOR pfd =
             {
@@ -35,15 +35,13 @@ namespace rut
                 0, 0, 0
             };
 
-            int pixel_format_index = ChoosePixelFormat(m_device, &pfd);
-            SetPixelFormat(m_device, pixel_format_index, &pfd);
+            int pixel_format_index = ChoosePixelFormat(m_data.device, &pfd);
+            SetPixelFormat(m_data.device, pixel_format_index, &pfd);
 
-            m_context = wglCreateContext(m_device);
-            if (!m_context)
+            m_data.context = wglCreateContext(m_data.device);
+            if (!m_data.context)
                 throw std::runtime_error("Error creating WGL context: " + std::to_string(GetLastError()));
-            wglMakeCurrent(m_device, m_context);
-
-            LoadOpenGLFunctions(reinterpret_cast<LoadProc>(&wglGetProcAddress));
+            wglMakeCurrent(m_data.device, m_data.context);
 
             GLint major, minor;
             glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -51,13 +49,16 @@ namespace rut
             m_version_major = major;
             m_version_minor = minor;
 
+            // Must wrap wglGetProcAddress due to calling convention
+            LoadOpenGLFunctions([](const char *name) -> Proc { return reinterpret_cast<Proc>(wglGetProcAddress(name)); });
+
             if (m_version_major < 3 || (m_version_major == 3 && m_version_minor < 3))
                 throw std::runtime_error("Device only supports OpenGL version " + std::to_string(m_version_major) + "." + std::to_string(m_version_major) + " - a minimum of 3.3 is required.");
         }
 
         WGLContext::~WGLContext()
         {
-            wglDeleteContext(m_context);
+            wglDeleteContext(m_data.context);
         }
 
         uint32_t WGLContext::GetVersionMajor() const { return m_version_major; }
@@ -68,10 +69,10 @@ namespace rut
 
         void WGLContext::End()
         {
-            wglSwapLayerBuffers(m_device, WGL_SWAP_MAIN_PLANE);
+            wglSwapLayerBuffers(m_data.device, WGL_SWAP_MAIN_PLANE);
         }
 
-        uint64_t WGLContext::GetHandle() const { return reinterpret_cast<uint64_t>(m_context); }
+        uint64_t WGLContext::GetHandle() const { return reinterpret_cast<uint64_t>(&m_data); }
     }
 }
 

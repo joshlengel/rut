@@ -3,8 +3,19 @@
 #ifdef RUT_HAS_WIN32
 
 #include"RUT/Event.h"
+
+#ifdef RUT_HAS_WGL
 #include"impl/WGL/WGLContext.h"
+#include"impl/OpenGL/OpenGLUtils.h"
+#endif
+#ifdef RUT_HAS_EGL
 #include"impl/EGL/EGLContext.h"
+#include"impl/OpenGL/OpenGLUtils.h"
+#endif
+#ifdef RUT_HAS_VULKAN
+#include"impl/Vulkan/VulkanX11Context.h"
+#include"impl/Vulkan/VulkanUtils.h"
+#endif
 
 #include<stdexcept>
 #include<iostream>
@@ -37,7 +48,7 @@ namespace rut
             if (!m_window)
                 throw std::runtime_error("Error creating Win32 window: handle is null");
             
-            SetWindowLongPtr(m_window, 0, reinterpret_cast<LONG_PTR>(this));
+            SetWindowLongPtr(m_window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
             SetWindowPos(m_window, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
             // Create context
@@ -63,11 +74,42 @@ namespace rut
 
         LRESULT Win32Window::WindowProc(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
         {
-            Win32Window *win = reinterpret_cast<Win32Window*>(GetWindowLongPtr(window, 0));
+            Win32Window *win = reinterpret_cast<Win32Window*>(GetWindowLongPtr(window, GWLP_USERDATA));
             switch (message)
             {
                 case WM_DESTROY:
-                    PostQuitMessage(0);
+                {
+                    WindowClosedEvent event(win->shared_from_this());
+                    win->m_handler(event);
+                    win->m_should_close = true;
+                    return 0;
+                }
+                
+                case WM_SIZE:
+                    win->m_props.width = LOWORD(l_param);
+                    win->m_props.height = HIWORD(l_param);
+
+#ifdef RUT_HAS_WGL
+                    if (win->m_context_api == CONTEXT_API_WGL)
+                    {
+                        WGLData *data = reinterpret_cast<WGLData*>(win->m_context->GetHandle());
+                        data->context_renderable = false;
+                    }
+#endif
+#ifdef RUT_HAS_EGL
+                    if (win->m_context_api == CONTEXT_API_EGL)
+                    {
+                        EGLData *data = reinterpret_cast<EGLData*>(win->m_context->GetHandle());
+                        data->context_renderable = false;
+                    }
+#endif
+#ifdef RUT_HAS_VULKAN
+                    if (win->m_context_api == CONTEXT_API_KHR_SURFACE)
+                    {
+                        VulkanData *data = reinterpret_cast<VulkanData*>(win->m_context->GetHandle());
+                        data->swapchain_renderable = false;
+                    }
+#endif
                     return 0;
                 
                 default:
@@ -86,17 +128,40 @@ namespace rut
             MSG msg{};
             while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
             {
-                if (msg.message == WM_QUIT)
-                {
-                    WindowClosedEvent event(shared_from_this());
-                    m_handler(event);
-                    m_should_close = true;
-                    return;
-                }
-
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             }
+
+#ifdef RUT_HAS_WGL
+            if (m_context_api == CONTEXT_API_WGL)
+            {
+                WGLData *data = reinterpret_cast<WGLData*>(m_context->GetHandle());
+                if (!data->context_renderable)
+                {
+                    glViewport(0, 0, m_props.width, m_props.height);
+                    data->context_renderable = true;
+                }
+            }
+#endif
+#ifdef RUT_HAS_EGL
+            if (m_context_api == CONTEXT_API_EGL)
+            {
+                EGLData *data = reinterpret_cast<EGLData*>(m_context->GetHandle());
+                if (!data->context_renderable)
+                {
+                    glViewport(0, 0, m_props.width, m_props.height);
+                    data->context_renderable = true;
+                }
+            }
+#endif
+#ifdef RUT_HAS_VULKAN
+            if (m_context_api == CONTEXT_API_KHR_SURFACE)
+            {
+                VulkanData *data = reinterpret_cast<VulkanData*>(m_context->GetHandle());
+                if (!data->swapchain_renderable)
+                    SetupVulkanSwapchain(m_props.width, m_props.height, data);
+            }
+#endif
         }
 
         bool Win32Window::ShouldClose() const { return m_should_close; }

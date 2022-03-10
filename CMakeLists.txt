@@ -50,7 +50,7 @@ if (WIN32)
     message("-- Win32: Found")
     message("-- DX11: Found")
     set(RUT_HAS_WIN32 True)
-    set(RUT_HAS_DX11 True)
+    set(RUT_HAS_DX11 False)
 
     if (OpenGL_OpenGL_FOUND)
         message("-- OpenGL: Found")

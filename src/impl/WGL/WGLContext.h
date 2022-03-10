@@ -12,6 +12,13 @@ namespace rut
 {
     namespace impl
     {
+        struct WGLData
+        {
+            HDC device;
+            HGLRC context;
+            bool context_renderable = false;
+        };
+
         class WGLContext : public Context
         {
         public:
@@ -27,8 +34,7 @@ namespace rut
             virtual uint64_t GetHandle() const override;
         
         private:
-            HDC m_device;
-            HGLRC m_context;
+            WGLData m_data;
             uint32_t m_version_major, m_version_minor;
         };
     }

@@ -63,7 +63,7 @@ namespace rut
 {
     namespace impl
     {
-        void LoadOpenGLFunctions(LoadProc load_proc)
+        void LoadOpenGLFunctions(const std::function<Proc(const char*)> &load_proc)
         {
             // Vertex arrays
             LOAD_FUNC(glGenVertexArrays);

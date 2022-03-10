@@ -10,14 +10,13 @@ namespace rut
 {
     namespace impl
     {
-        EGLContext::EGLContext(void *native_display, void *native_window):
-            m_egl_data(new EGLData)
+        EGLContext::EGLContext(void *native_display, void *native_window)
         {
-            m_egl_data->display = eglGetDisplay(reinterpret_cast<EGLNativeDisplayType>(native_display));
-            if (!m_egl_data->display)
+            m_data.display = eglGetDisplay(reinterpret_cast<EGLNativeDisplayType>(native_display));
+            if (!m_data.display)
                 throw std::runtime_error("Error getting EGL display: " + std::to_string(eglGetError()));
 
-            if (!eglInitialize(m_egl_data->display, nullptr, nullptr))
+            if (!eglInitialize(m_data.display, nullptr, nullptr))
                 throw std::runtime_error("Error initializing EGL: " + std::to_string(eglGetError()));
             
             EGLint attr[] =
@@ -49,14 +48,14 @@ namespace rut
             };
             EGLConfig config;
             EGLint num_config;
-            if (!eglChooseConfig(m_egl_data->display, attr, &config, 1, &num_config))
+            if (!eglChooseConfig(m_data.display, attr, &config, 1, &num_config))
                 throw std::runtime_error("Error choosing EGL config: " + std::to_string(eglGetError()));
             
             if (num_config == 0)
                 throw std::runtime_error("No EGL configs available");
             
-            m_egl_data->surface = eglCreateWindowSurface(m_egl_data->display, config, reinterpret_cast<EGLNativeWindowType>(native_window), nullptr);
-            if (!m_egl_data->surface)
+            m_data.surface = eglCreateWindowSurface(m_data.display, config, reinterpret_cast<EGLNativeWindowType>(native_window), nullptr);
+            if (!m_data.surface)
                 throw std::runtime_error("Error creating EGL surface: " + std::to_string(eglGetError()));
 
             eglBindAPI(EGL_OPENGL_API);
@@ -66,13 +65,11 @@ namespace rut
                 EGL_CONTEXT_CLIENT_VERSION, 3,
                 EGL_NONE
             };
-            m_egl_data->context = eglCreateContext(m_egl_data->display, config, static_cast<::EGLContext>(0), ctxattr);
-            if (!m_egl_data->context)
+            m_data.context = eglCreateContext(m_data.display, config, static_cast<::EGLContext>(0), ctxattr);
+            if (!m_data.context)
                 throw std::runtime_error("Error creating EGL context: " + std::to_string(eglGetError()));
             
-            eglMakeCurrent(m_egl_data->display, m_egl_data->surface, m_egl_data->surface, m_egl_data->context);
-
-            LoadOpenGLFunctions(reinterpret_cast<LoadProc>(&eglGetProcAddress));
+            eglMakeCurrent(m_data.display, m_data.surface, m_data.surface, m_data.context);
 
             GLint major, minor;
             glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -80,15 +77,17 @@ namespace rut
             m_version_major = major;
             m_version_minor = minor;
 
+            LoadOpenGLFunctions(reinterpret_cast<Proc(*)(const char*)>(&eglGetProcAddress));
+
             if (m_version_major < 3 || (m_version_major == 3 && m_version_minor < 3))
                 throw std::runtime_error("Device only supports OpenGL version " + std::to_string(m_version_major) + "." + std::to_string(m_version_major) + " - a minimum of 3.3 is required.");
         }
 
         EGLContext::~EGLContext()
         {
-            eglDestroyContext(m_egl_data->display, m_egl_data->context);
-            eglDestroySurface(m_egl_data->display, m_egl_data->surface);
-            eglTerminate(m_egl_data->display);
+            eglDestroyContext(m_data.display, m_data.context);
+            eglDestroySurface(m_data.display, m_data.surface);
+            eglTerminate(m_data.display);
         }
 
         uint32_t EGLContext::GetVersionMajor() const { return m_version_major; }
@@ -99,11 +98,11 @@ namespace rut
 
         void EGLContext::End()
         {
-            eglSwapBuffers(m_egl_data->display, m_egl_data->surface);
+            eglSwapBuffers(m_data.display, m_data.surface);
         }
 
 
-        uint64_t EGLContext::GetHandle() const { return reinterpret_cast<uint64_t>(m_egl_data); }
+        uint64_t EGLContext::GetHandle() const { return reinterpret_cast<uint64_t>(&m_data); }
     }
 }
 

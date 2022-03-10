@@ -13,6 +13,13 @@ namespace rut
 {
     namespace impl
     {
+        struct GLXData
+        {
+            ::Display *display;
+            ::Window window;
+            ::GLXContext context;
+        }
+
         class GLXContext : public Context
         {
         public:
@@ -28,9 +35,7 @@ namespace rut
             virtual uint64_t GetHandle() const override;
 
         private:
-            ::Display *m_display;
-            ::Window m_window;
-            ::GLXContext m_context;
+            GLXData m_data;
 
             uint32_t m_version_major, m_version_minor;
         };

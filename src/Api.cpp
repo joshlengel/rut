@@ -51,7 +51,7 @@ namespace rut
         // Pretty straightforward on windows
         s_window_api = WINDOW_API_WIN32;
         s_context_api = CONTEXT_API_WGL;
-        s_render_api = RENDER_API_DX11;
+        s_render_api = RENDER_API_OPENGL;//RENDER_API_DX11;
 #elif defined(RUT_PLATFORM_LINUX)
 #ifdef RUT_HAS_X11
         s_window_api = WINDOW_API_X11;

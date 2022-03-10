@@ -17,6 +17,7 @@ namespace rut
             ::EGLDisplay display;
             ::EGLContext context;
             ::EGLSurface surface;
+            bool context_renderable = false;
         };
 
         class EGLContext : public Context
@@ -34,7 +35,7 @@ namespace rut
             virtual uint64_t GetHandle() const override;
         
         private:
-            EGLData *m_egl_data;
+            EGLData m_data;
 
             uint32_t m_version_major, m_version_minor;
         };

@@ -5,11 +5,14 @@
 
 #ifdef RUT_HAS_OPENGL
 
+#include<functional>
+
 #ifdef RUT_PLATFORM_LINUX
 //#define GL_GLEXT_PROTOTYPES
 #include<GL/gl.h>
 #include<GL/glext.h>
 #elif defined(RUT_PLATFORM_WINDOWS)
+#include<GL/gl.h>
 #include<GL/glext.h>
 #endif
 
@@ -80,9 +83,8 @@ namespace rut
 	namespace impl
 	{
 		typedef void(*Proc)();
-		typedef Proc (*LoadProc)(const char *str);
 
-		void LoadOpenGLFunctions(LoadProc load_proc);
+		void LoadOpenGLFunctions(const std::function<Proc(const char*)> &load_proc);
 	}
 }
 
