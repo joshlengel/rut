@@ -19,6 +19,9 @@ std::shared_ptr<rut::ShaderUnit> rut::ShaderUnit::Create(Context *context, Shade
     case RENDER_API_NONE:
         throw std::runtime_error("Error creating shader unit. RENDER_API_NONE selected");
 
+    default:
+        throw std::runtime_error("Error creating shader unit. Invalid api selected");
+    
 #ifdef RUT_HAS_OPENGL
     case RENDER_API_OPENGL:
         return std::make_shared<rut::impl::OpenGLShaderUnit>(context, type, source);
@@ -36,6 +39,9 @@ std::shared_ptr<rut::ShaderProgram> rut::ShaderProgram::Create(Context *context,
     {
     case RENDER_API_NONE:
         throw std::runtime_error("Error creating shader program. RENDER_API_NONE selected");
+
+    default:
+        throw std::runtime_error("Error creating shader program. Invalid api selected");
 
 #ifdef RUT_HAS_OPENGL
     case RENDER_API_OPENGL:

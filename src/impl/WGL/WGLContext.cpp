@@ -63,6 +63,14 @@ namespace rut
         uint32_t WGLContext::GetVersionMajor() const { return m_version_major; }
         uint32_t WGLContext::GetVersionMinor() const { return m_version_minor; }
 
+        void WGLContext::Begin()
+        {}
+
+        void WGLContext::End()
+        {
+            wglSwapLayerBuffers(m_device, WGL_SWAP_MAIN_PLANE);
+        }
+
         uint64_t WGLContext::GetHandle() const { return reinterpret_cast<uint64_t>(m_context); }
     }
 }

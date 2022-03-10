@@ -31,7 +31,7 @@ namespace rut
         virtual const WindowProperties &GetProps() const = 0;
 
         virtual void Show() = 0;
-        virtual void Update() = 0;
+        virtual void PollEvents() = 0;
 
         virtual bool ShouldClose() const = 0;
         virtual void SetEventHandler(const EventHandler &handler) = 0;

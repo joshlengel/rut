@@ -6,13 +6,14 @@
 
 #include<stdexcept>
 #include<vector>
-#include<iostream>
 #include<cstring>
 #include<unordered_map>
 #include<optional>
 #include<set>
 
 #ifdef RUT_BUILD_DEBUG
+#include<iostream>
+
 static const std::vector<const char*> REQUIRED_EXTENSIONS =
 {
     VK_EXT_DEBUG_UTILS_EXTENSION_NAME
@@ -28,7 +29,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData)
 {
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    std::cerr << "Vulkan validation layer: " << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;
 }
@@ -163,7 +164,7 @@ namespace rut
             vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &num_present_modes, &details.present_modes[0]);
         }
 
-        void CreateVulkanInstance(uint32_t num_extensions, const char *const *extensions, VulkanData *dst)
+        void CreateVulkanInstance(uint32_t num_extensions, const char *const *extensions, VulkanData *dst, uint32_t &version_major, uint32_t &version_minor)
         {
             // Get available extensions
             uint32_t num_available_extensions;
@@ -176,11 +177,6 @@ namespace rut
             vkEnumerateInstanceLayerProperties(&num_available_layers, nullptr);
             std::vector<VkLayerProperties> available_layers(num_available_layers);
             vkEnumerateInstanceLayerProperties(&num_available_layers, &available_layers[0]);
-
-            std::cout << "Available Vulkan layers:\n";
-            for (const VkLayerProperties &layer : available_layers)
-                std::cout << layer.layerName << "\n";
-            std::cout << std::endl;
 
             std::vector<const char*> necessary_extensions(extensions, extensions + num_extensions);
             necessary_extensions.insert(necessary_extensions.end(), REQUIRED_EXTENSIONS.begin(), REQUIRED_EXTENSIONS.end());
@@ -242,6 +238,11 @@ namespace rut
             if (vkCreateInstance(&instance_create_info, nullptr, &dst->instance) != VK_SUCCESS)
                 throw std::runtime_error("Error creating Vulkan context: vkCreateInstance failed");
             
+            uint32_t version;
+            vkEnumerateInstanceVersion(&version);
+            version_major = VK_VERSION_MAJOR(version);
+            version_minor = VK_VERSION_MINOR(version);
+
 #ifdef RUT_BUILD_DEBUG
             VkDebugUtilsMessengerCreateInfoEXT debug_messenger_create_info{};
             SetVulkanDebugMessengerCreateInfo(debug_messenger_create_info);
@@ -385,6 +386,7 @@ namespace rut
 
             VkFenceCreateInfo fence_create_info{};
             fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+            fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
             data->image_available_sems.resize(MAX_FRAMES_IN_FLIGHT);
             data->render_finished_sems.resize(MAX_FRAMES_IN_FLIGHT);
@@ -400,6 +402,8 @@ namespace rut
 
         void SetupVulkanSwapchain(uint32_t width, uint32_t height, VulkanData *data)
         {
+            vkDeviceWaitIdle(data->device);
+
             // Clean up previous
             VkSwapchainKHR old_swapchain = nullptr;
             if (data->have_swapchain)
@@ -425,7 +429,6 @@ namespace rut
             VkSurfaceFormatKHR surface_format = swapchain_details.ChooseFormat();
             VkPresentModeKHR present_mode = swapchain_details.ChoosePresentMode();
             VkExtent2D extent = swapchain_details.ChooseExtent(width, height);
-            std::cout << "Surface width: " << extent.width << ", surface height: " << extent.height << std::endl;
 
             uint32_t image_count  = swapchain_details.capabilities.minImageCount + 1;
             if (swapchain_details.capabilities.maxImageCount > 0 && image_count > swapchain_details.capabilities.maxImageCount)
@@ -585,18 +588,29 @@ namespace rut
             data->cmd_buffers.resize(MAX_FRAMES_IN_FLIGHT);
             if (vkAllocateCommandBuffers(data->device, &cmd_buffer_alloc_info, &data->cmd_buffers[0]) != VK_SUCCESS)
                 throw std::runtime_error("Error creating Vulkan context: vkAllocateCommandBuffers failed");
-
-            vkAcquireNextImageKHR(data->device, data->swapchain, UINT64_MAX, data->image_available_sems[data->current_frame], VK_NULL_HANDLE, &data->current_image_index);
+            
             data->swapchain_renderable = true;
         }
 
-        void SwapVulkanBuffers(VulkanData *data)
+        void BeginVulkanContext(VulkanData *data)
         {
-            VkResult result;
+            vkWaitForFences(data->device, 1, &data->in_flight_fences[data->current_frame], VK_TRUE, UINT64_MAX);
+            vkResetFences(data->device, 1, &data->in_flight_fences[data->current_frame]);
+            vkResetCommandBuffer(data->cmd_buffers[data->current_frame], 0);
 
+            // Get next swapchain image
+            VkResult result = vkAcquireNextImageKHR(data->device, data->swapchain, UINT64_MAX, data->image_available_sems[data->current_frame], VK_NULL_HANDLE, &data->current_image_index);
+            if (result == VK_ERROR_OUT_OF_DATE_KHR)
+                data->swapchain_renderable = false;
+            else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+                throw std::runtime_error("Error beginning Vulkan context: vkAquireNextImageKHR failed");
+        }
+
+        void EndVulkanContext(VulkanData *data)
+        {
             if (!data->swapchain_renderable)
                 return;
-
+            
             VkSubmitInfo submit_info{};
             submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -624,23 +638,20 @@ namespace rut
             present_info.pSwapchains = &data->swapchain;
             present_info.pImageIndices = &data->current_image_index;
             present_info.pResults = nullptr; // Optional
-            result = vkQueuePresentKHR(data->present_queue, &present_info);
-            if (result != VK_SUCCESS && result != VK_ERROR_OUT_OF_DATE_KHR && result != VK_SUBOPTIMAL_KHR)
+
+            VkResult result = vkQueuePresentKHR(data->present_queue, &present_info);
+            if (result == VK_ERROR_OUT_OF_DATE_KHR)
+                data->swapchain_renderable = false;
+            if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
                 throw std::runtime_error("Error swaping Vulkan buffers: vkQueuePresentKHR failed");
 
-            vkWaitForFences(data->device, 1, &data->in_flight_fences[data->current_frame], VK_TRUE, UINT64_MAX);
-            vkResetFences(data->device, 1, &data->in_flight_fences[data->current_frame]);
-            vkResetCommandBuffer(data->cmd_buffers[data->current_frame], 0);
-
             data->current_frame = (data->current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
-
-            result = vkAcquireNextImageKHR(data->device, data->swapchain, UINT64_MAX, data->image_available_sems[data->current_frame], VK_NULL_HANDLE, &data->current_image_index);
-            if (result != VK_SUCCESS && result != VK_ERROR_OUT_OF_DATE_KHR && result != VK_SUBOPTIMAL_KHR)
-                throw std::runtime_error("Error swaping Vulkan buffers: vkAquireNextImageKHR failed");
         }
 
         void DestroyVulkanInstance(VulkanData *data)
         {
+            vkDeviceWaitIdle(data->device);
+
             if (data->have_swapchain)
             {
                 vkDestroyCommandPool(data->device, data->cmd_pool, nullptr);

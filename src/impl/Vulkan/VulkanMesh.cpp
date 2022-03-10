@@ -38,6 +38,8 @@ namespace rut
 
         VulkanMesh::~VulkanMesh()
         {
+            vkDeviceWaitIdle(m_data->device);
+            
             if (m_mesh_data.have_buffers[0])
             {
                 vkDestroyBuffer(m_data->device, m_mesh_data.buffers[0], nullptr);

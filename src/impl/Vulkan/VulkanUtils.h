@@ -42,11 +42,12 @@ namespace rut
             bool swapchain_renderable = false;
         };
 
-        void CreateVulkanInstance(uint32_t num_extensions, const char *const *extensions, VulkanData *dst);
+        void CreateVulkanInstance(uint32_t num_extensions, const char *const *extensions, VulkanData *dst, uint32_t &version_major, uint32_t &version_minor);
         void SetupVulkanDevice(uint32_t num_extensions, const char *const *extensions, VulkanData *data);
         void SetupVulkanSwapchain(uint32_t width, uint32_t height, VulkanData *data);
         void SetupVulkanSyncObjects(VulkanData *data);
-        void SwapVulkanBuffers(VulkanData *data);
+        void BeginVulkanContext(VulkanData *data);
+        void EndVulkanContext(VulkanData *data);
         void DestroyVulkanInstance(VulkanData *data);
     }
 }

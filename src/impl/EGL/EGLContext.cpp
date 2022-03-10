@@ -94,6 +94,15 @@ namespace rut
         uint32_t EGLContext::GetVersionMajor() const { return m_version_major; }
         uint32_t EGLContext::GetVersionMinor() const { return m_version_minor; }
 
+        void EGLContext::Begin()
+        {}
+
+        void EGLContext::End()
+        {
+            eglSwapBuffers(m_egl_data->display, m_egl_data->surface);
+        }
+
+
         uint64_t EGLContext::GetHandle() const { return reinterpret_cast<uint64_t>(m_egl_data); }
     }
 }

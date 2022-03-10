@@ -92,15 +92,19 @@ public:
 
     void Update()
     {
+        m_window->PollEvents();
+
        if (m_window->KeyDown(rut::KC_ESCAPE))
             m_should_close = true;
         
         // Render
+        m_window->GetContext()->Begin();
+
         m_renderer->Begin();
         m_renderer->Render(m_mesh);
         m_renderer->End();
 
-        m_window->Update();
+        m_window->GetContext()->End();
     }
 
 private:

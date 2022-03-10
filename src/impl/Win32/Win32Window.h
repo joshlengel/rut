@@ -24,7 +24,7 @@ namespace rut
             virtual const WindowProperties &GetProps() const override;
 
             virtual void Show() override;
-            virtual void Update() override;
+            virtual void PollEvents() override;
 
             virtual bool ShouldClose() const override;
             virtual void SetEventHandler(const EventHandler &handler) override;

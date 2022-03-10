@@ -21,6 +21,9 @@ namespace rut
             virtual uint32_t GetVersionMajor() const override;
             virtual uint32_t GetVersionMinor() const override;
 
+            virtual void Begin() override;
+            virtual void End() override;
+
             virtual uint64_t GetHandle() const override;
         
         private:

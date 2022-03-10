@@ -80,7 +80,7 @@ namespace rut
             ShowWindow(m_window, SW_SHOW);
         }
 
-        void Win32Window::Update()
+        void Win32Window::PollEvents()
         {
             // Check events
             MSG msg{};
@@ -97,19 +97,6 @@ namespace rut
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             }
-
-            // Swap buffers
-#ifdef RUT_HAS_EGL
-            if (m_context_api == CONTEXT_API_EGL)
-            {
-                EGLData *data = reinterpret_cast<EGLData*>(m_context->GetHandle());
-                eglSwapBuffers(data->display, data->surface, data->surface, data->context);
-            }
-#endif
-#ifdef RUT_HAS_WGL
-            if (m_context_api == CONTEXT_API_WGL)
-                wglSwapLayerBuffers(GetDC(m_window), WGL_SWAP_MAIN_PLANE);
-#endif
         }
 
         bool Win32Window::ShouldClose() const { return m_should_close; }

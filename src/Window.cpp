@@ -18,6 +18,9 @@ std::shared_ptr<rut::Window> rut::Window::Create(const WindowProperties &props)
     {
     case WINDOW_API_NONE:
         throw std::runtime_error("Error creating window. WINDOW_API_NONE selected");
+    
+    default:
+        throw std::runtime_error("Error creating window. Invalid api selected");
 
 #ifdef RUT_HAS_WIN32
     case WINDOW_API_WIN32:

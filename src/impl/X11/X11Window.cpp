@@ -101,6 +101,8 @@ namespace rut
             m_props(props),
             m_handler([](Event &e){})
         {
+            XInitThreads();
+
             // Get screen
             m_display = XOpenDisplay(nullptr);
             m_screen = DefaultScreen(m_display);
@@ -115,7 +117,7 @@ namespace rut
             // Change title
             XSetStandardProperties(m_display, m_window, props.title.c_str(), props.title.c_str(), None, nullptr, 0, nullptr);
 
-            XSelectInput(m_display, m_window, ExposureMask | ResizeRedirectMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
+            XSelectInput(m_display, m_window, ExposureMask | StructureNotifyMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
 
             // Register close event
             Atom wm_delete_window = XInternAtom(m_display, "WM_DELETE_WINDOW", false);
@@ -157,7 +159,7 @@ namespace rut
             XMapRaised(m_display, m_window);
         }
 
-        void X11Window::Update()
+        void X11Window::PollEvents()
         {
             // Poll events
             while (XPending(m_display))
@@ -169,24 +171,10 @@ namespace rut
 
             m_old_cursor_pos = m_cursor_pos;
 
-            // Swap buffers
-#ifdef RUT_HAS_GLX
-            if (m_context_api == CONTEXT_API_GLX)
-                glXSwapBuffers(m_display, m_window);
-#endif
-#ifdef RUT_HAS_EGL
-            if (m_context_api == CONTEXT_API_EGL)
-            {
-                EGLData *data = reinterpret_cast<EGLData*>(m_context->GetHandle());
-                eglSwapBuffers(data->display, data->surface);
-            }
-#endif
 #ifdef RUT_HAS_VULKAN
             if (m_context_api == CONTEXT_API_KHR_SURFACE)
             {
                 VulkanData *data = reinterpret_cast<VulkanData*>(m_context->GetHandle());
-                SwapVulkanBuffers(data);
-                
                 if (!data->swapchain_renderable)
                     SetupVulkanSwapchain(m_props.width, m_props.height, data);
             }
@@ -202,16 +190,15 @@ namespace rut
                     //! TODO: Redraw
                     break;
                 
-                case ResizeRequest:
+                case ConfigureNotify:
                 {
-                    m_props.width = event.xresizerequest.width;
-                    m_props.height = event.xresizerequest.height;
+                    m_props.width = event.xconfigure.width;
+                    m_props.height = event.xconfigure.height;
 #ifdef RUT_HAS_VULKAN
                     if (m_context_api == CONTEXT_API_KHR_SURFACE)
                     {
                         VulkanData *data = reinterpret_cast<VulkanData*>(m_context->GetHandle());
                         data->swapchain_renderable = false;
-                        std::cout << "width: " << m_props.width << ", height: " << m_props.height << std::endl;
                     }
 #endif
                     break;

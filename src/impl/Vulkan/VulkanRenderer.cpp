@@ -216,6 +216,8 @@ namespace rut
 
         VulkanRenderer::~VulkanRenderer()
         {
+            vkDeviceWaitIdle(m_data->device);
+            
             if (m_have_pipline)
             {
                 vkDestroyPipeline(m_data->device, m_pipeline, nullptr);

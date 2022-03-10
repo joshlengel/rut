@@ -13,7 +13,8 @@ namespace rut
     namespace impl
     {
         GLXContext::GLXContext(::Display *display, int screen, ::Window window):
-            m_display(display)
+            m_display(display),
+            m_window(window)
         {
             int attrib_list[] =
             {
@@ -24,7 +25,7 @@ namespace rut
             };
             XVisualInfo *visual = glXChooseVisual(m_display, screen, attrib_list);
             m_context = glXCreateContext(display, visual, 0, true);
-            glXMakeCurrent(m_display, window, m_context);
+            glXMakeCurrent(m_display, m_window, m_context);
 
             LoadOpenGLFunctions(reinterpret_cast<LoadProc>(&glXGetProcAddress));
 
@@ -45,6 +46,14 @@ namespace rut
 
         uint32_t GLXContext::GetVersionMajor() const { return m_version_major; }
         uint32_t GLXContext::GetVersionMinor() const { return m_version_minor; }
+
+        void GLXContext::Begin()
+        {}
+
+        void GLXContext::End()
+        {
+            glXSwapBuffers(m_display, m_window);
+        }
 
         uint64_t GLXContext::GetHandle() const { return reinterpret_cast<uint64_t>(m_context); }
     }

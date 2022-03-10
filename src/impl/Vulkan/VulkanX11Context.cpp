@@ -16,7 +16,7 @@ namespace rut
                 VK_KHR_SURFACE_EXTENSION_NAME,
                 VK_KHR_XLIB_SURFACE_EXTENSION_NAME
             };
-            CreateVulkanInstance(required_extensions.size(), required_extensions.data(), &m_data);
+            CreateVulkanInstance(required_extensions.size(), required_extensions.data(), &m_data, m_version_major, m_version_minor);
 
             VkXlibSurfaceCreateInfoKHR surface_create_info{};
             surface_create_info.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
@@ -41,9 +41,19 @@ namespace rut
             DestroyVulkanInstance(&m_data);
         }
 
-        uint32_t VulkanX11Context::GetVersionMajor() const { return 0; }
-        uint32_t VulkanX11Context::GetVersionMinor() const { return 0; }
+        uint32_t VulkanX11Context::GetVersionMajor() const { return m_version_major; }
+        uint32_t VulkanX11Context::GetVersionMinor() const { return m_version_minor; }
 
+        void VulkanX11Context::Begin()
+        {
+            BeginVulkanContext(&m_data);
+        }
+
+        void VulkanX11Context::End()
+        {
+            EndVulkanContext(&m_data);
+        }
+        
         uint64_t VulkanX11Context::GetHandle() const { return reinterpret_cast<uint64_t>(&m_data); }
     }
 }
