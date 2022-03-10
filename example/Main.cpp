@@ -20,7 +20,7 @@ static const std::array<Vertex, 6> VERTICES =
     { glm::vec2(-0.5f,  0.5f) }
 }};
 
-static const std::string VERTEX_SOURCE = R"(
+static const std::string VERTEX_SOURCE_VK = R"(
     #version 450
 
     layout(location = 0) in vec2 position;
@@ -33,10 +33,35 @@ static const std::string VERTEX_SOURCE = R"(
     }
 )";
 
-static const std::string FRAGMENT_SOURCE = R"(
+static const std::string FRAGMENT_SOURCE_VK = R"(
     #version 450
 
     layout(location = 0) in vec2 _uv;
+
+    layout(location = 0) out vec4 color;
+
+    void main() {
+        color = vec4(_uv.x, 1.0 - _uv.y, 0.0, 1.0);
+    }
+)";
+
+static const std::string VERTEX_SOURCE_GL = R"(
+    #version 330
+
+    layout(location = 0) in vec2 position;
+
+    out vec2 _uv;
+
+    void main() {
+        gl_Position = vec4(position, 0.0, 1.0);
+        _uv = position + 0.5;
+    }
+)";
+
+static const std::string FRAGMENT_SOURCE_GL = R"(
+    #version 330
+
+    in vec2 _uv;
 
     layout(location = 0) out vec4 color;
 
@@ -70,8 +95,8 @@ public:
 
         // Setup shader
         rut::ShaderProgramProperties shader_props;
-        shader_props.vertex_shader = rut::ShaderUnit::Create(m_window->GetContext(), rut::ST_VERTEX, VERTEX_SOURCE);
-        shader_props.fragment_shader = rut::ShaderUnit::Create(m_window->GetContext(), rut::ST_FRAGMENT, FRAGMENT_SOURCE);
+        shader_props.vertex_shader = rut::ShaderUnit::Create(m_window->GetContext(), rut::ST_VERTEX, VERTEX_SOURCE_GL);
+        shader_props.fragment_shader = rut::ShaderUnit::Create(m_window->GetContext(), rut::ST_FRAGMENT, FRAGMENT_SOURCE_GL);
         shader_props.layout =
         {
             { "position", rut::VT_FVEC2 }
@@ -118,6 +143,8 @@ private:
 int main()
 {
     rut::Api::ChooseDefaults();
+    rut::Api::SetContextApi(rut::CONTEXT_API_EGL);
+    rut::Api::SetRenderApi(rut::RENDER_API_OPENGL);
     rut::Api::CheckCompatibility();
     rut::Api::PrintInfo();
 

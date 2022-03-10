@@ -16,7 +16,8 @@ static const std::string CONTEXT_API_NAMES[] =
 	"NONE",
 	"GLX",
 	"EGL",
-	"WGL"
+	"WGL",
+	"KHR_SURFACE"
 };
 
 static const std::string RENDER_API_NAMES[] =

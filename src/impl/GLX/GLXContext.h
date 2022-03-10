@@ -18,7 +18,8 @@ namespace rut
             ::Display *display;
             ::Window window;
             ::GLXContext context;
-        }
+            bool context_renderable = false;
+        };
 
         class GLXContext : public Context
         {

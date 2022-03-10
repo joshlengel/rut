@@ -169,20 +169,26 @@ namespace rut
             m_old_cursor_pos = m_cursor_pos;
 
 #ifdef RUT_HAS_GLX
-                    if (m_context_api == CONTEXT_API_GLX)
-                    {
-                        GLXData *data = reinterpret_cast<GLXData*>(m_context->GetHandle());
-                        if (!data->context_renderable)
-                            glViewport(0, 0, m_props.width, m_props.height);
-                    }
+            if (m_context_api == CONTEXT_API_GLX)
+            {
+                GLXData *data = reinterpret_cast<GLXData*>(m_context->GetHandle());
+                if (!data->context_renderable)
+                {
+                    glViewport(0, 0, m_props.width, m_props.height);
+                    data->context_renderable = true;
+                }
+            }
 #endif
 #ifdef RUT_HAS_EGL
-                    if (m_context_api == CONTEXT_API_EGL)
-                    {
-                        EGLData *data = reinterpret_cast<EGLData*>(m_context->GetHandle());
-                        if (!data->context_renderable)
-                            glViewport(0, 0, m_props.width, m_props.height);
-                    }
+            if (m_context_api == CONTEXT_API_EGL)
+            {
+                EGLData *data = reinterpret_cast<EGLData*>(m_context->GetHandle());
+                if (!data->context_renderable)
+                {
+                    glViewport(0, 0, m_props.width, m_props.height);
+                    data->context_renderable = true;
+                }
+            }
 #endif
 #ifdef RUT_HAS_VULKAN
             if (m_context_api == CONTEXT_API_KHR_SURFACE)
