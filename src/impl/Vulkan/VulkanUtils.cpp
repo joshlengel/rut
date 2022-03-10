@@ -301,14 +301,20 @@ namespace rut
                 if (!features.geometryShader || !indices.IsComplete() || !details.IsAdequate())
                     return 0;
                 
+                int score = 1;
+                
                 switch (props.deviceType)
                 {
                     case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-                        return 2;
+                        score += 1000;
+                        break;
                     
-                    default:
-                        return 1;
+                    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                        score += 100;
+                        break;
                 }
+
+                return score;
             };
 
             std::unordered_map<VkPhysicalDevice, int> dev_scores;
@@ -467,7 +473,8 @@ namespace rut
                 throw std::runtime_error("Error creating Vulkan context: vkCreateSwapchainKHR failed");
             
             // Destroy old swapchain
-            vkDestroySwapchainKHR(data->device, old_swapchain, nullptr);
+            if (old_swapchain)
+                vkDestroySwapchainKHR(data->device, old_swapchain, nullptr);
 
             data->swapchain_format = surface_format.format;
             data->swapchain_extent = extent;

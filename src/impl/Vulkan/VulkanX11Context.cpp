@@ -41,8 +41,8 @@ namespace rut
             DestroyVulkanInstance(&m_data);
         }
 
-        uint32_t VulkanX11Context::GetVersionMajor() const {}
-        uint32_t VulkanX11Context::GetVersionMinor() const {}
+        uint32_t VulkanX11Context::GetVersionMajor() const { return 0; }
+        uint32_t VulkanX11Context::GetVersionMinor() const { return 0; }
 
         uint64_t VulkanX11Context::GetHandle() const { return reinterpret_cast<uint64_t>(&m_data); }
     }
