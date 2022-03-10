@@ -657,7 +657,11 @@ namespace rut
 
             vkDestroyDevice(data->device, nullptr);
             vkDestroySurfaceKHR(data->instance, data->surface, nullptr);
+
+#ifdef RUT_BUILD_DEBUG
             DestroyDebugUtilsMessengerEXT(data->instance, data->debug_messenger, nullptr);
+#endif
+
             vkDestroyInstance(data->instance, nullptr);
         }
     }
