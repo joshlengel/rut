@@ -30,7 +30,8 @@ namespace rut
         CONTEXT_API_NONE = 0,
         CONTEXT_API_GLX,
         CONTEXT_API_EGL,
-        CONTEXT_API_WGL
+        CONTEXT_API_WGL,
+        CONTEXT_API_KHR_SURFACE
     };
 
     enum RenderApi : uint8_t

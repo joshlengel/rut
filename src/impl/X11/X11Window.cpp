@@ -15,6 +15,11 @@
 
 #include<EGL/egl.h>
 #endif
+#ifdef RUT_HAS_VULKAN
+#include"impl/Vulkan/VulkanX11Context.h"
+
+#include<vulkan/vulkan.h>
+#endif
 
 #include<iostream>
 #include<cstdlib>
@@ -110,7 +115,7 @@ namespace rut
             // Change title
             XSetStandardProperties(m_display, m_window, props.title.c_str(), props.title.c_str(), None, nullptr, 0, nullptr);
 
-            XSelectInput(m_display, m_window, ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
+            XSelectInput(m_display, m_window, ExposureMask | ResizeRedirectMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
 
             // Register close event
             Atom wm_delete_window = XInternAtom(m_display, "WM_DELETE_WINDOW", false);
@@ -125,6 +130,10 @@ namespace rut
 #ifdef RUT_HAS_EGL
             if (m_context_api == CONTEXT_API_EGL)
                 m_context = new EGLContext(reinterpret_cast<void*>(m_display), reinterpret_cast<void*>(m_window));
+#endif
+#ifdef RUT_HAS_VULKAN
+            if (m_context_api == CONTEXT_API_KHR_SURFACE)
+                m_context = new VulkanX11Context(m_display, m_window, m_props.width, m_props.height);
 #endif
 
             // Clear state
@@ -172,6 +181,16 @@ namespace rut
                 eglSwapBuffers(data->display, data->surface);
             }
 #endif
+#ifdef RUT_HAS_VULKAN
+            if (m_context_api == CONTEXT_API_KHR_SURFACE)
+            {
+                VulkanData *data = reinterpret_cast<VulkanData*>(m_context->GetHandle());
+                SwapVulkanBuffers(data);
+                
+                if (!data->swapchain_renderable)
+                    SetupVulkanSwapchain(m_props.width, m_props.height, data);
+            }
+#endif
         }
 
         void X11Window::OnEvent(XEvent &event)
@@ -182,6 +201,21 @@ namespace rut
                 case Expose:
                     //! TODO: Redraw
                     break;
+                
+                case ResizeRequest:
+                {
+                    m_props.width = event.xresizerequest.width;
+                    m_props.height = event.xresizerequest.height;
+#ifdef RUT_HAS_VULKAN
+                    if (m_context_api == CONTEXT_API_KHR_SURFACE)
+                    {
+                        VulkanData *data = reinterpret_cast<VulkanData*>(m_context->GetHandle());
+                        data->swapchain_renderable = false;
+                        std::cout << "width: " << m_props.width << ", height: " << m_props.height << std::endl;
+                    }
+#endif
+                    break;
+                }
                 
                 case ClientMessage:
                 {

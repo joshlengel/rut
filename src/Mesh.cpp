@@ -71,6 +71,10 @@ namespace rut
 #include"impl/OpenGL/OpenGLMesh.h"
 #endif
 
+#ifdef RUT_HAS_VULKAN
+#include"impl/Vulkan/VulkanMesh.h"
+#endif
+
 std::shared_ptr<rut::Mesh> rut::Mesh::Create(Context *context, const rut::VertexLayout &layout)
 {
     switch (Api::GetRenderApi())
@@ -81,6 +85,11 @@ std::shared_ptr<rut::Mesh> rut::Mesh::Create(Context *context, const rut::Vertex
 #ifdef RUT_HAS_OPENGL
     case RENDER_API_OPENGL:
         return std::make_shared<rut::impl::OpenGLMesh>(context, layout);
+#endif
+
+#ifdef RUT_HAS_VULKAN
+    case RENDER_API_VULKAN:
+        return std::make_shared<rut::impl::VulkanMesh>(context, layout);
 #endif
     }
 }
@@ -95,6 +104,11 @@ std::shared_ptr<rut::Mesh> rut::Mesh::Create(Context *context, rut::VertexLayout
 #ifdef RUT_HAS_OPENGL
     case RENDER_API_OPENGL:
         return std::make_shared<rut::impl::OpenGLMesh>(context, std::move(layout));
+#endif
+
+#ifdef RUT_HAS_VULKAN
+    case RENDER_API_VULKAN:
+        return std::make_shared<rut::impl::VulkanMesh>(context, std::move(layout));
 #endif
     }
 }

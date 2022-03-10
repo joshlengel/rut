@@ -36,6 +36,15 @@ else ()
     message("-- EGL: Not found")
 endif ()
 
+find_package(Vulkan)
+if (Vulkan_FOUND)
+    message("-- Vulkan: Found")
+    set(RUT_HAS_VULKAN True)
+    set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} Vulkan::Vulkan shaderc_combined)
+else ()
+    message("-- Vulkan: Not found")
+endif ()
+
 # Windows
 if (WIN32)
     message("-- Win32: Found")

@@ -8,6 +8,10 @@
 #include"impl/OpenGL/OpenGLShader.h"
 #endif
 
+#ifdef RUT_HAS_VULKAN
+#include"impl/Vulkan/VulkanShader.h"
+#endif
+
 std::shared_ptr<rut::ShaderUnit> rut::ShaderUnit::Create(Context *context, ShaderType type, const std::string &source)
 {
     switch (Api::GetRenderApi())
@@ -18,6 +22,10 @@ std::shared_ptr<rut::ShaderUnit> rut::ShaderUnit::Create(Context *context, Shade
 #ifdef RUT_HAS_OPENGL
     case RENDER_API_OPENGL:
         return std::make_shared<rut::impl::OpenGLShaderUnit>(context, type, source);
+#endif
+#ifdef RUT_HAS_VULKAN
+    case RENDER_API_VULKAN:
+        return std::make_shared<rut::impl::VulkanShaderUnit>(context, type, source);
 #endif
     }
 }
@@ -32,6 +40,10 @@ std::shared_ptr<rut::ShaderProgram> rut::ShaderProgram::Create(Context *context,
 #ifdef RUT_HAS_OPENGL
     case RENDER_API_OPENGL:
         return std::make_shared<rut::impl::OpenGLShaderProgram>(context, props);
+#endif
+#ifdef RUT_HAS_VULKAN
+    case RENDER_API_VULKAN:
+        return std::make_shared<rut::impl::VulkanShaderProgram>(context, props);
 #endif
     }
 }

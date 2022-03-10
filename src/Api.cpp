@@ -57,16 +57,19 @@ namespace rut
         s_window_api = WINDOW_API_X11;
 #endif
 		// Favor EGL over GLX
+#ifdef RUT_HAS_OPENGL
+        s_render_api = RENDER_API_OPENGL;
 #ifdef RUT_HAS_GLX
         s_context_api = CONTEXT_API_GLX;
 #endif
 #ifdef RUT_HAS_EGL
         s_context_api = CONTEXT_API_EGL;
 #endif
-#ifdef RUT_HAS_OPENGL
-        s_render_api = RENDER_API_OPENGL;
 #endif
-		//! TODO: favor Vulkan
+#ifdef RUT_HAS_VULKAN
+		s_render_api = RENDER_API_VULKAN;
+		s_context_api = CONTEXT_API_KHR_SURFACE;
+#endif
 #endif
     }
 
@@ -80,11 +83,6 @@ namespace rut
 		
 		if (s_context_api == CONTEXT_API_GLX)
 			throw std::runtime_error("Attempting to use CONTEXT_API_GLX on windows");
-		
-#ifndef RUT_HAS_VULKAN
-		if (s_render_api == RENDER_API_VULKAN)
-			throw std::runtime_error("Attempting to use RENDER_API_VULKAN without Vulkan SDK");
-#endif
 #elif defined (RUT_PLATFORM_LINUX)
 		if (s_window_api == WINDOW_API_WIN32)
             throw std::runtime_error("Attempting to use WINDOW_API_WIN32 on linux");
@@ -94,11 +92,16 @@ namespace rut
 		
 		if (s_render_api == RENDER_API_DX11)
 			throw std::runtime_error("Attempting to use RENDER_API_DX11 on linux");
-		
+#endif
 #ifndef RUT_HAS_VULKAN
+		if (s_context_api == CONTEXT_API_KHR_SURFACE)
+			throw std::runtime_error("Attempting to use CONTEXT_API_KHR_SURFACE without Vulkan SDK");
+
 		if (s_render_api == RENDER_API_VULKAN)
 			throw std::runtime_error("Attempting to use RENDER_API_VULKAN without Vulkan SDK");
-#endif
+#else
+		if ((s_render_api == RENDER_API_VULKAN && s_context_api != CONTEXT_API_KHR_SURFACE) || (s_render_api != RENDER_API_VULKAN && s_context_api == CONTEXT_API_KHR_SURFACE))
+			throw std::runtime_error("Attempting to use either RENDER_API_VULKAN or CONTEXT_API_KHR_SURFACE but not both");
 #endif
 
 		// Check if apis available

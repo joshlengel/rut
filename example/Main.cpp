@@ -21,11 +21,11 @@ static const std::array<Vertex, 6> VERTICES =
 }};
 
 static const std::string VERTEX_SOURCE = R"(
-    #version 130
+    #version 450
 
-    in vec2 position;
+    layout(location = 0) in vec2 position;
 
-    out vec2 _uv;
+    layout(location = 0) out vec2 _uv;
 
     void main() {
         gl_Position = vec4(position, 0.0, 1.0);
@@ -34,11 +34,11 @@ static const std::string VERTEX_SOURCE = R"(
 )";
 
 static const std::string FRAGMENT_SOURCE = R"(
-    #version 130
+    #version 450
 
-    in vec2 _uv;
+    layout(location = 0) in vec2 _uv;
 
-    out vec4 color;
+    layout(location = 0) out vec4 color;
 
     void main() {
         color = vec4(_uv.x, 1.0 - _uv.y, 0.0, 1.0);
@@ -53,7 +53,7 @@ public:
     {
         // Create window
         rut::WindowProperties props;
-        props.width = 800;
+        props.width = 900;
         props.height = 600;
         props.title = "RUT example";
         m_window = rut::Window::Create(props);
@@ -113,7 +113,9 @@ private:
 
 int main()
 {
-    rut::Api::SetupDefault();
+    rut::Api::ChooseDefaults();
+    rut::Api::CheckCompatibility();
+    rut::Api::PrintInfo();
 
     Application app;
     

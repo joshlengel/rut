@@ -8,6 +8,10 @@
 #include"impl/OpenGL/OpenGLRenderer.h"
 #endif
 
+#ifdef RUT_HAS_VULKAN
+#include"impl/Vulkan/VulkanRenderer.h"
+#endif
+
 std::shared_ptr<rut::Renderer> rut::Renderer::Create(Context *context, const RendererProperties &props)
 {
     switch (Api::GetRenderApi())
@@ -18,6 +22,11 @@ std::shared_ptr<rut::Renderer> rut::Renderer::Create(Context *context, const Ren
 #ifdef RUT_HAS_OPENGL
     case RENDER_API_OPENGL:
         return std::make_shared<rut::impl::OpenGLRenderer>(context, props);
+#endif
+
+#ifdef RUT_HAS_VULKAN
+    case RENDER_API_VULKAN:
+        return std::make_shared<rut::impl::VulkanRenderer>(context, props);
 #endif
     }
 }
