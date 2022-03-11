@@ -21,10 +21,15 @@ file(GLOB_RECURSE sources "${RUT_INCLUDE}/*.h" "${RUT_SRC}/*.h" "${RUT_SRC}/*.cp
 add_library(rut ${sources})
 target_include_directories(rut PUBLIC ${RUT_INCLUDE})
 target_include_directories(rut PRIVATE ${RUT_SRC} ${RUT_SRC}/impl/api)
-target_link_libraries(rut PUBLIC glm)
+target_link_libraries(rut PUBLIC glm shaderc spirv-cross-glsl spirv-cross-cpp)
 
 # deps
 add_subdirectory(${RUT_DEPS}/glm)
+
+add_subdirectory(${RUT_DEPS}/spirv-cross)
+set(SHADERC_SKIP_TESTS ON)
+set(SHADERC_SKIP_EXAMPLES ON)
+add_subdirectory(${RUT_DEPS}/shaderc)
 
 set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL)
@@ -40,7 +45,7 @@ find_package(Vulkan)
 if (Vulkan_FOUND)
     message("-- Vulkan: Found")
     set(RUT_HAS_VULKAN True)
-    set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} Vulkan::Vulkan shaderc_combined)
+    set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} Vulkan::Vulkan)
 else ()
     message("-- Vulkan: Not found")
 endif ()

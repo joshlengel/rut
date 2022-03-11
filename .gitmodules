@@ -1,3 +1,9 @@
 [submodule "deps/glm"]
 	path = deps/glm
 	url = git@github.com:g-truc/glm
+[submodule "deps/shaderc"]
+	path = deps/shaderc
+	url = git@github.com:google/shaderc
+[submodule "deps/spirv-cross"]
+	path = deps/spirv-cross
+	url = git@github.com:KhronosGroup/spirv-cross

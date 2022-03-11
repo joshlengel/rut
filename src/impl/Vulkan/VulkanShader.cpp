@@ -3,18 +3,10 @@
 #ifdef RUT_HAS_VULKAN
 
 #include"RUT/Context.h"
+#include"ShaderTools.h"
 #include"impl/Vulkan/VulkanUtils.h"
 
 #include<stdexcept>
-
-#include<shaderc/shaderc.hpp>
-
-static const shaderc_shader_kind SHADER_TYPE_SHADERC_KINDS[] =
-{
-    shaderc_vertex_shader,
-    shaderc_fragment_shader,
-    shaderc_geometry_shader
-};
 
 namespace rut
 {
@@ -23,20 +15,18 @@ namespace rut
         VulkanShaderUnit::VulkanShaderUnit(Context *context, ShaderType type, const std::string &source):
             m_data(reinterpret_cast<VulkanData*>(context->GetHandle()))
         {
-            // Compile glsl code to spir-v
-            shaderc::Compiler compiler;
-            shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(source, SHADER_TYPE_SHADERC_KINDS[type], "shader.glsl");
-            if (result.GetCompilationStatus() != shaderc_compilation_status_success)
-                throw std::runtime_error("Error creating Vulkan shader. Errors compiling shader: " + result.GetErrorMessage());
-            
+            CodeBlob blob = GenerateVulkanShader(source, type);
+
             // Create vulkan shader module
             VkShaderModuleCreateInfo create_info{};
             create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-            create_info.codeSize = std::distance(result.begin(), result.end()) * sizeof(uint32_t);
-            create_info.pCode = result.begin();
+            create_info.codeSize = blob.bytes;
+            create_info.pCode = reinterpret_cast<uint32_t*>(blob.data);
 
             if (vkCreateShaderModule(m_data->device, &create_info, nullptr, &m_module) != VK_SUCCESS)
                 throw std::runtime_error("Error creating Vulkan shader: vkCreateShaderModule failed");
+            
+            delete[] blob.data;
         }
 
         VulkanShaderUnit::~VulkanShaderUnit()

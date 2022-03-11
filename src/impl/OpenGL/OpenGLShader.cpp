@@ -2,6 +2,8 @@
 
 #ifdef RUT_HAS_OPENGL
 
+#include"ShaderTools.h"
+
 #include<stdexcept>
 #include<string_view>
 
@@ -26,8 +28,11 @@ namespace rut
         {
             m_id = glCreateShader(SHADER_TYPE_GLENUM[type]);
 
-            const char *c_str = source.c_str();
-            glShaderSource(m_id, 1, &c_str, nullptr);
+            CodeBlob blob = GenerateOpenGLShader(source, type);
+            GLint length = blob.bytes;
+            glShaderSource(m_id, 1, &blob.data, &length);
+            delete[] blob.data;
+
             glCompileShader(m_id);
 
             GLint status;
