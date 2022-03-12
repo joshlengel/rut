@@ -4,7 +4,6 @@ project(rut VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_POSITION_INDEPENDENT_CODE True)
 
 set(RUT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(RUT_INCLUDE ${RUT_ROOT}/include)
@@ -22,15 +21,18 @@ file(GLOB_RECURSE sources "${RUT_INCLUDE}/*.h" "${RUT_SRC}/*.h" "${RUT_SRC}/*.cp
 add_library(rut ${sources})
 target_include_directories(rut PUBLIC ${RUT_INCLUDE})
 target_include_directories(rut PRIVATE ${RUT_SRC} ${RUT_SRC}/impl/api)
-target_link_libraries(rut PUBLIC glm shaderc spirv-cross-glsl spirv-cross-cpp)
+target_link_libraries(rut PUBLIC glm spirv-cross-glsl spirv-cross-cpp)
 
 # deps
 add_subdirectory(${RUT_DEPS}/glm)
 
+set(SPIRV_CROSS_CLI OFF)
+set(SPIRV_CROSS_ENABLE_TESTS OFF)
+set(SPIRV_CROSS_ENABLE_CPP OFF)
+set(SPIRV_CROSS_ENABLE_REFLECT OFF)
+set(SPIRV_CROSS_ENABLE_C_API OFF)
+set(SPIRV_CROSS_ENABLE_UTIL OFF)
 add_subdirectory(${RUT_DEPS}/spirv-cross)
-set(SHADERC_SKIP_TESTS ON)
-set(SHADERC_SKIP_EXAMPLES ON)
-add_subdirectory(${RUT_DEPS}/shaderc)
 
 set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL)
@@ -46,9 +48,13 @@ find_package(Vulkan)
 if (Vulkan_FOUND)
     message("-- Vulkan: Found")
     set(RUT_HAS_VULKAN True)
-    set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} Vulkan::Vulkan)
+    set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} Vulkan::Vulkan shaderc_combined)
 else ()
     message("-- Vulkan: Not found")
+    set(SHADERC_SKIP_TESTS ON)
+    set(SHADERC_SKIP_EXAMPLES ON)
+    add_subdirectory(${RUT_DEPS}/shaderc)
+    set(RUT_ADDITIONAL_LIBS ${RUT_ADDITIONAL_LIBS} shaderc)
 endif ()
 
 # Windows
@@ -105,6 +111,7 @@ else ()
 endif ()
 
 configure_file(${RUT_INCLUDE}/Config.h.in ${RUT_INCLUDE}/RUT/Config.h)
+target_include_directories(rut PRIVATE ${RUT_ADDITIONAL_HEADERS})
 target_link_libraries(rut PRIVATE ${RUT_ADDITIONAL_LIBS})
 
 # example
