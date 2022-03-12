@@ -51,7 +51,7 @@ static const std::string FRAGMENT_SOURCE = R"(
     };
 
     void main() {
-        fragColor = vec4(color, 1.0);
+        fragColor = vec4(_uv.x, 1.0 - _uv.y, 0.0, 1.0);
     }
 )";
 
@@ -94,6 +94,7 @@ public:
 
         m_shader = rut::ShaderProgram::Create(m_window->GetContext(), shader_props);
 
+        // Setup uniform buffers
         m_vertex_ub = rut::UniformBuffer::Create(m_window->GetContext(), 
             {
                 { "projection", rut::VT_MAT4 }
@@ -130,8 +131,7 @@ public:
         // Render
         m_window->GetContext()->Begin();
 
-        m_renderer->Begin();
-
+        // Upload uniform data
         m_vertex_ub->Map();
         m_vertex_ub->SetVariable("projection", rut::CreateOrthoProjection(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f));
         m_vertex_ub->Unmap();
@@ -140,6 +140,8 @@ public:
         m_fragment_ub->SetVariable("color", glm::vec3(1.0f, 0.0f, 0.0f));
         m_fragment_ub->Unmap();
 
+        // Render mesh
+        m_renderer->Begin();
         m_renderer->Render(m_mesh);
         m_renderer->End();
 
