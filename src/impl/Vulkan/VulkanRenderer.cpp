@@ -5,6 +5,7 @@
 #include"RUT/Context.h"
 #include"VulkanShader.h"
 #include"VulkanMesh.h"
+#include"VulkanUniformBuffer.h"
 
 #include<stdexcept>
 #include<cstring>
@@ -38,6 +39,41 @@ namespace rut
             m_props(props),
             m_cached_extent(m_data->swapchain_extent)
         {
+            std::shared_ptr<VulkanShaderProgram> vk_program = std::dynamic_pointer_cast<VulkanShaderProgram>(m_props.shader);
+
+            VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info{};
+            descriptor_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            descriptor_layout_create_info.bindingCount = vk_program->GetLayoutBindings().size();
+            descriptor_layout_create_info.pBindings = vk_program->GetLayoutBindings().data();
+
+            if (vkCreateDescriptorSetLayout(m_data->device, &descriptor_layout_create_info, nullptr, &m_descriptor_set_layout) != VK_SUCCESS)
+                throw std::runtime_error("Error creating Vulkan renderer: vkCreateDescriptorSetLayout failed");
+            
+            VkDescriptorPoolSize pool_size;
+            pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            pool_size.descriptorCount = MAX_FRAMES_IN_FLIGHT * vk_program->GetLayoutBindings().size();
+
+            VkDescriptorPoolCreateInfo descriptor_pool_create_info{};
+            descriptor_pool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            descriptor_pool_create_info.poolSizeCount = 1;
+            descriptor_pool_create_info.pPoolSizes = &pool_size;
+            descriptor_pool_create_info.maxSets = MAX_FRAMES_IN_FLIGHT;
+
+            if (vkCreateDescriptorPool(m_data->device, &descriptor_pool_create_info, nullptr, &m_descriptor_pool) != VK_SUCCESS)
+                throw std::runtime_error("Error creating Vulkan renderer: vkCreateDescriptorPool failed");
+            
+            std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, m_descriptor_set_layout);
+
+            VkDescriptorSetAllocateInfo descriptor_set_alloc_info{};
+            descriptor_set_alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            descriptor_set_alloc_info.descriptorPool = m_descriptor_pool;
+            descriptor_set_alloc_info.descriptorSetCount = MAX_FRAMES_IN_FLIGHT;
+            descriptor_set_alloc_info.pSetLayouts = layouts.data();
+
+            m_descriptor_sets.resize(MAX_FRAMES_IN_FLIGHT);
+            if (vkAllocateDescriptorSets(m_data->device, &descriptor_set_alloc_info, &m_descriptor_sets[0]) != VK_SUCCESS)
+                throw std::runtime_error("Error creating Vulkan renderer: vkAllocateDescriptorSets failed");
+
             SetupPipeline();
         }
 
@@ -46,22 +82,22 @@ namespace rut
             if (m_have_pipline)
             {
                 vkDestroyPipeline(m_data->device, m_pipeline, nullptr);
-                vkDestroyPipelineLayout(m_data->device, m_layout, nullptr);
+                vkDestroyPipelineLayout(m_data->device, m_pipeline_layout, nullptr);
             }
 
             m_have_pipline = true;
 
             VkVertexInputBindingDescription input_binding_desc{};
             input_binding_desc.binding = 0;
-            input_binding_desc.stride = m_props.shader->GetProperties().layout.GetStride();
+            input_binding_desc.stride = m_props.shader->GetProperties().input_layout.GetStride();
             input_binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
             std::vector<VkVertexInputAttributeDescription> attribute_descs;
-            uint32_t num_attributes = std::distance(m_props.shader->GetProperties().layout.begin(), m_props.shader->GetProperties().layout.end());
+            uint32_t num_attributes = std::distance(m_props.shader->GetProperties().input_layout.begin(), m_props.shader->GetProperties().input_layout.end());
             attribute_descs.reserve(num_attributes);
 
             uint32_t index = 0;
-            for (const auto &item : m_props.shader->GetProperties().layout)
+            for (const auto &item : m_props.shader->GetProperties().input_layout)
             {
                 VkVertexInputAttributeDescription attribute_desc{};
                 attribute_desc.binding = 0;
@@ -180,12 +216,12 @@ namespace rut
 
             VkPipelineLayoutCreateInfo layout_create_info{};
             layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            layout_create_info.setLayoutCount = 0; // Optional
-            layout_create_info.pSetLayouts = nullptr; // Optional
+            layout_create_info.setLayoutCount = 1;
+            layout_create_info.pSetLayouts = &m_descriptor_set_layout;
             layout_create_info.pushConstantRangeCount = 0; // Optional
             layout_create_info.pPushConstantRanges = nullptr; // Optional
 
-            if (vkCreatePipelineLayout(m_data->device, &layout_create_info, nullptr, &m_layout) != VK_SUCCESS)
+            if (vkCreatePipelineLayout(m_data->device, &layout_create_info, nullptr, &m_pipeline_layout) != VK_SUCCESS)
                 throw std::runtime_error("Error creating Vulkan renderer: vkCreatePipelineLayout failed");
             
             // Create pipeline
@@ -205,7 +241,7 @@ namespace rut
             pipeline_create_info.pColorBlendState = &color_blend_create_info;
             pipeline_create_info.pDynamicState = nullptr; // Optional
 
-            pipeline_create_info.layout = m_layout;
+            pipeline_create_info.layout = m_pipeline_layout;
             pipeline_create_info.renderPass = m_data->render_pass;
             pipeline_create_info.subpass = 0;
             pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE; // Optional
@@ -219,10 +255,13 @@ namespace rut
         {
             vkDeviceWaitIdle(m_data->device);
 
+            vkDestroyDescriptorPool(m_data->device, m_descriptor_pool, nullptr);
+            vkDestroyDescriptorSetLayout(m_data->device, m_descriptor_set_layout, nullptr);
+            
             if (m_have_pipline)
             {
                 vkDestroyPipeline(m_data->device, m_pipeline, nullptr);
-                vkDestroyPipelineLayout(m_data->device, m_layout, nullptr);
+                vkDestroyPipelineLayout(m_data->device, m_pipeline_layout, nullptr);
             }
         }
     
@@ -236,6 +275,34 @@ namespace rut
                 SetupPipeline();
             }
 
+            std::shared_ptr<VulkanShaderProgram> vk_shader = std::dynamic_pointer_cast<VulkanShaderProgram>(m_props.shader);
+            std::vector<VkDescriptorBufferInfo> buffer_infos;
+            std::vector<VkWriteDescriptorSet> write_sets;
+            buffer_infos.reserve(vk_shader->GetLayoutBindings().size());
+            write_sets.reserve(vk_shader->GetLayoutBindings().size());
+            for (const auto &entry : vk_shader->GetBoundBuffers())
+            {
+                VkDescriptorBufferInfo buffer_info{};
+                buffer_info.buffer = reinterpret_cast<VulkanUniformBufferData*>(entry.second->GetHandle())->buffers[m_data->current_frame];
+                buffer_info.offset = 0;
+                buffer_info.range = entry.second->GetLayout().GetStride();
+                buffer_infos.push_back(buffer_info);
+
+                VkWriteDescriptorSet write_set{};
+                write_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                write_set.dstSet = m_descriptor_sets[m_data->current_frame];
+                write_set.dstBinding = entry.first;
+                write_set.dstArrayElement = 0;
+                write_set.descriptorCount = 1;
+                write_set.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                write_set.pBufferInfo = &buffer_infos.back();
+                write_set.pImageInfo = nullptr;
+                write_set.pTexelBufferView = nullptr;
+                write_sets.push_back(write_set);
+            }
+
+            vkUpdateDescriptorSets(m_data->device, write_sets.size(), write_sets.data(), 0, nullptr);
+            
             VkCommandBufferBeginInfo command_buffer_begin_info{};
             command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
             command_buffer_begin_info.flags = 0; // Optional
@@ -259,6 +326,7 @@ namespace rut
 
             vkCmdBeginRenderPass(m_data->cmd_buffers[m_data->current_frame], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
             vkCmdBindPipeline(m_data->cmd_buffers[m_data->current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+            vkCmdBindDescriptorSets(m_data->cmd_buffers[m_data->current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_layout, 0, 1, &m_descriptor_sets[m_data->current_frame], 0, nullptr);
         }
 
         void VulkanRenderer::Render(std::shared_ptr<Mesh> mesh)

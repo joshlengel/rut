@@ -30,8 +30,11 @@ namespace rut
             RendererProperties m_props;
             VkExtent2D m_cached_extent;
             bool m_have_pipline = false;
-            VkPipelineLayout m_layout;
+            VkPipelineLayout m_pipeline_layout;
+            VkDescriptorSetLayout m_descriptor_set_layout;
             VkPipeline m_pipeline;
+            VkDescriptorPool m_descriptor_pool;
+            std::vector<VkDescriptorSet> m_descriptor_sets;
 
             void SetupPipeline();
         };

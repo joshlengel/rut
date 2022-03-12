@@ -68,17 +68,6 @@ namespace rut
 {
     namespace impl
     {
-        struct VulkanQueueFamilyIndices
-        {
-            std::optional<uint32_t> graphics_family;
-            std::optional<uint32_t> present_family;
-
-            bool IsComplete() const
-            {
-                return graphics_family.has_value() && present_family.has_value();
-            }
-        };
-
         struct VulkanSwapchainDetails
         {
             VkSurfaceCapabilitiesKHR capabilities;
@@ -124,7 +113,7 @@ namespace rut
             }
         };
 
-        void GetQueueFamilies(VkPhysicalDevice physical_device, VkSurfaceKHR surface, VulkanQueueFamilyIndices &indices)
+        void GetVulkanQueueFamilies(VkPhysicalDevice physical_device, VkSurfaceKHR surface, VulkanQueueFamilyIndices &indices)
         {
             uint32_t num_queue_families;
             vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &num_queue_families, nullptr);
@@ -162,6 +151,18 @@ namespace rut
             vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &num_present_modes, nullptr);
             details.present_modes.resize(num_present_modes);
             vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &num_present_modes, &details.present_modes[0]);
+        }
+
+        uint32_t GetVulkanMemoryType(VkPhysicalDevice physical_device, uint32_t filter, VkMemoryPropertyFlags flags)
+        {
+            VkPhysicalDeviceMemoryProperties props;
+            vkGetPhysicalDeviceMemoryProperties(physical_device, &props);
+
+            for (uint32_t i = 0; i < props.memoryTypeCount; ++i)
+                if (filter & (1 << i) && (props.memoryTypes[i].propertyFlags & flags) == flags)
+                    return i;
+            
+            throw std::runtime_error("Error getting Vulkan physical device memory type: No suitable memory type found");
         }
 
         void CreateVulkanInstance(uint32_t num_extensions, const char *const *extensions, VulkanData *dst, uint32_t &version_major, uint32_t &version_minor)
@@ -294,7 +295,7 @@ namespace rut
                 }
                 
                 VulkanQueueFamilyIndices indices;
-                GetQueueFamilies(physical_device, data->surface, indices);
+                GetVulkanQueueFamilies(physical_device, data->surface, indices);
 
                 VulkanSwapchainDetails details;
                 GetSwapchainDetails(physical_device, data->surface, details);
@@ -337,7 +338,7 @@ namespace rut
             
             // Queues
             VulkanQueueFamilyIndices queue_family_indices;
-            GetQueueFamilies(data->physical_device, data->surface, queue_family_indices);
+            GetVulkanQueueFamilies(data->physical_device, data->surface, queue_family_indices);
 
             std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
             std::set<uint32_t> unique_queue_families =
@@ -445,7 +446,7 @@ namespace rut
             swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
             VulkanQueueFamilyIndices indices;
-            GetQueueFamilies(data->physical_device, data->surface, indices);
+            GetVulkanQueueFamilies(data->physical_device, data->surface, indices);
             uint32_t queue_family_indices[] =
             {
                 indices.graphics_family.value(),

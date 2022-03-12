@@ -5,6 +5,7 @@
 #ifdef RUT_HAS_VULKAN
 
 #include"RUT/Mesh.h"
+#include"RUT/Layout.h"
 #include"VulkanUtils.h"
 
 namespace rut

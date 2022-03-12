@@ -7,18 +7,6 @@
 #include<stdexcept>
 #include<cstring>
 
-static uint32_t GetMemoryType(VkPhysicalDevice physical_device, uint32_t filter, VkMemoryPropertyFlags flags)
-{
-    VkPhysicalDeviceMemoryProperties props;
-    vkGetPhysicalDeviceMemoryProperties(physical_device, &props);
-
-    for (uint32_t i = 0; i < props.memoryTypeCount; ++i)
-        if (filter & (1 << i) && (props.memoryTypes[i].propertyFlags & flags) == flags)
-            return i;
-    
-    throw std::runtime_error("Error getting Vulkan physical device memory type: No suitable memory type found");
-}
-
 namespace rut
 {
     namespace impl
@@ -80,7 +68,7 @@ namespace rut
             VkMemoryAllocateInfo alloc_info{};
             alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
             alloc_info.allocationSize = mem_requirements.size;
-            alloc_info.memoryTypeIndex = GetMemoryType(m_data->physical_device, mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            alloc_info.memoryTypeIndex = GetVulkanMemoryType(m_data->physical_device, mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
             if (vkAllocateMemory(m_data->device, &alloc_info, nullptr, &m_mesh_data.mems[0]) != VK_SUCCESS)
                 throw std::runtime_error("Error setting Vulkan mesh vertices: vkAllocateMemory failed");
@@ -121,7 +109,7 @@ namespace rut
             VkMemoryAllocateInfo alloc_info{};
             alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
             alloc_info.allocationSize = mem_requirements.size;
-            alloc_info.memoryTypeIndex = GetMemoryType(m_data->physical_device, mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+            alloc_info.memoryTypeIndex = GetVulkanMemoryType(m_data->physical_device, mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
             if (vkAllocateMemory(m_data->device, &alloc_info, nullptr, &m_mesh_data.mems[1]) != VK_SUCCESS)
                 throw std::runtime_error("Error setting Vulkan mesh indices: vkAllocateMemory failed");

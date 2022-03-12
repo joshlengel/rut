@@ -5,6 +5,7 @@
 #ifdef RUT_HAS_VULKAN
 
 #include<vector>
+#include<optional>
 
 #include<vulkan/vulkan.h>
 
@@ -14,6 +15,17 @@ namespace rut
 {
     namespace impl
     {
+        struct VulkanQueueFamilyIndices
+        {
+            std::optional<uint32_t> graphics_family;
+            std::optional<uint32_t> present_family;
+
+            bool IsComplete() const
+            {
+                return graphics_family.has_value() && present_family.has_value();
+            }
+        };
+
         struct VulkanData
         {
             VkInstance instance;
@@ -42,6 +54,8 @@ namespace rut
             bool swapchain_renderable = false;
         };
 
+        void GetVulkanQueueFamilies(VkPhysicalDevice physical_device, VkSurfaceKHR surface, VulkanQueueFamilyIndices &indices);
+        uint32_t GetVulkanMemoryType(VkPhysicalDevice physical_device, uint32_t filter, VkMemoryPropertyFlags flags);
         void CreateVulkanInstance(uint32_t num_extensions, const char *const *extensions, VulkanData *dst, uint32_t &version_major, uint32_t &version_minor);
         void SetupVulkanDevice(uint32_t num_extensions, const char *const *extensions, VulkanData *data);
         void SetupVulkanSwapchain(uint32_t width, uint32_t height, VulkanData *data);

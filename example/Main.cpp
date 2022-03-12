@@ -27,8 +27,13 @@ static const std::string VERTEX_SOURCE = R"(
 
     layout(location = 0) out vec2 _uv;
 
+    layout(binding = 0) uniform VertexUniforms
+    {
+        mat4 projection;
+    };
+
     void main() {
-        gl_Position = vec4(position, 0.0, 1.0);
+        gl_Position = projection * vec4(position, 0.0, 1.0);
         _uv = position + 0.5;
     }
 )";
@@ -38,10 +43,15 @@ static const std::string FRAGMENT_SOURCE = R"(
 
     layout(location = 0) in vec2 _uv;
 
-    layout(location = 0) out vec4 color;
+    layout(location = 0) out vec4 fragColor;
+
+    layout(binding = 1) uniform FragUniforms
+    {
+        vec3 color;
+    };
 
     void main() {
-        color = vec4(_uv.x, 1.0 - _uv.y, 0.0, 1.0);
+        fragColor = vec4(color, 1.0);
     }
 )";
 
@@ -69,15 +79,35 @@ public:
         m_mesh->SetVertices(VERTICES.size(), VERTICES.data());
 
         // Setup shader
-        rut::ShaderProgramProperties shader_props;
+        rut::ShaderProgramCreateProperties shader_props;
         shader_props.vertex_shader = rut::ShaderUnit::Create(m_window->GetContext(), rut::ST_VERTEX, VERTEX_SOURCE);
         shader_props.fragment_shader = rut::ShaderUnit::Create(m_window->GetContext(), rut::ST_FRAGMENT, FRAGMENT_SOURCE);
-        shader_props.layout =
+        shader_props.props.input_layout =
         {
             { "position", rut::VT_FVEC2 }
         };
+        shader_props.props.uniform_bindings =
+        {
+            { 0, "VertexUniforms", rut::ST_VERTEX, {{ "projection", rut::VT_MAT4 }} },
+            { 1, "FragUniforms", rut::ST_FRAGMENT, {{ "color", rut::VT_FVEC3 }} }
+        };
 
         m_shader = rut::ShaderProgram::Create(m_window->GetContext(), shader_props);
+
+        m_vertex_ub = rut::UniformBuffer::Create(m_window->GetContext(), 
+            {
+                { "projection", rut::VT_MAT4 }
+            }
+        );
+
+        m_fragment_ub = rut::UniformBuffer::Create(m_window->GetContext(), 
+            {
+                { "color", rut::VT_FVEC3 }
+            }
+        );
+
+        m_shader->BindUniformBuffer(0, m_vertex_ub);
+        m_shader->BindUniformBuffer(1, m_fragment_ub);
 
         // Setup renderer
         rut::RendererProperties renderer_props;
@@ -101,6 +131,15 @@ public:
         m_window->GetContext()->Begin();
 
         m_renderer->Begin();
+
+        m_vertex_ub->Map();
+        m_vertex_ub->SetVariable("projection", rut::CreateOrthoProjection(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f));
+        m_vertex_ub->Unmap();
+
+        m_fragment_ub->Map();
+        m_fragment_ub->SetVariable("color", glm::vec3(1.0f, 0.0f, 0.0f));
+        m_fragment_ub->Unmap();
+
         m_renderer->Render(m_mesh);
         m_renderer->End();
 
@@ -111,6 +150,7 @@ private:
     std::shared_ptr<rut::Window> m_window;
     std::shared_ptr<rut::Mesh> m_mesh;
     std::shared_ptr<rut::ShaderProgram> m_shader;
+    std::shared_ptr<rut::UniformBuffer> m_vertex_ub, m_fragment_ub;
     std::shared_ptr<rut::Renderer> m_renderer;
     bool m_should_close;
 };

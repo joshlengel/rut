@@ -1,7 +1,7 @@
 #include"RUT/Utils.h"
 #include"RUT/Api.h"
 
-#include<glm/gtc/matrix_transform.hpp>
+#include<cmath>
 
 #include<stdexcept>
 
@@ -18,11 +18,29 @@ namespace rut
                 throw std::runtime_error("Cannot create ortho projection matrix: Invalid render api");
             
             case RENDER_API_OPENGL:
-                return glm::orthoLH_NO(left, right, bottom, top, near, far);
+            {
+                glm::mat4 res(1.0f);
+                res[0][0] = 2 / (right - left);
+                res[1][1] = 2 / (top - bottom);
+                res[2][2] = 2 / (far - near);
+                res[3][0] = - (right + left) / (right - left);
+                res[3][1] = - (top + bottom) / (top - bottom);
+                res[3][2] = - (far + near) / (far - near);
+                return res;
+            }
             
             case RENDER_API_VULKAN:
             case RENDER_API_DX11:
-                return glm::orthoRH_ZO(left, right, bottom, top, near, far);
+            {
+                glm::mat4 res(1.0f);
+                res[0][0] = 2 / (right - left);
+                res[1][1] = 2 / (bottom - top);
+                res[2][2] = 1 / (far - near);
+                res[3][0] = - (right + left) / (right - left);
+                res[3][1] = - (top + bottom) / (bottom - top);
+                res[3][2] = - near / (far - near);
+                return res;
+            }
         }
     }
 
@@ -37,11 +55,29 @@ namespace rut
                 throw std::runtime_error("Cannot create perspective projection matrix: Invalid render api");
             
             case RENDER_API_OPENGL:
-                return glm::perspectiveLH_NO(fov, aspect, near, far);
+            {
+                float tan_half_fov = tanf(fov * 0.5f);
+                glm::mat4 res(1.0f);
+                res[0][0] = 1 / (tan_half_fov * aspect);
+                res[1][1] = 1 / tan_half_fov;
+                res[2][2] = (far + near) / (far - near);
+                res[3][2] = - 2 * far * near / (far - near);
+                res[2][3] = 1.0f;
+                return res;
+            }
             
             case RENDER_API_VULKAN:
             case RENDER_API_DX11:
-                return glm::perspectiveRH_ZO(fov, aspect, near, far);
+            {
+                float tan_half_fov = tanf(fov * 0.5f);
+                glm::mat4 res(1.0f);
+                res[0][0] = 1 / (tan_half_fov * aspect);
+                res[1][1] = -1 / tan_half_fov;
+                res[2][2] = far / (far - near);
+                res[3][2] = - far * near / (far - near);
+                res[2][3] = 1.0f;
+                return res;
+            }
         }
     }
 }

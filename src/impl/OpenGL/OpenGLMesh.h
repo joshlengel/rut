@@ -5,6 +5,7 @@
 #ifdef RUT_HAS_OPENGL
 
 #include"RUT/Mesh.h"
+#include"RUT/Layout.h"
 #include"OpenGLUtils.h"
 
 namespace rut

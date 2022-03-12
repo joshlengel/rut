@@ -12,6 +12,8 @@ PFNGLGENBUFFERSPROC glGenBuffers;
 PFNGLDELETEBUFFERSPROC glDeleteBuffers;
 PFNGLBINDBUFFERPROC glBindBuffer;
 PFNGLBUFFERDATAPROC glBufferData;
+PFNGLBINDBUFFERBASEPROC glBindBufferBase;
+
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
 PFNGLVERTEXATTRIBIPOINTERPROC glVertexAttribIPointer;
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
@@ -34,6 +36,9 @@ PFNGLGETPROGRAMIVPROC glGetProgramiv;
 PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
 PFNGLGETACTIVEUNIFORMNAMEPROC glGetActiveUniformName;
 PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+PFNGLGETUNIFORMBLOCKINDEXPROC glGetUniformBlockIndex;
+PFNGLUNIFORMBLOCKBINDINGPROC glUniformBlockBinding;
+
 PFNGLUNIFORM1IPROC glUniform1i;
 PFNGLUNIFORM1FPROC glUniform1f;
 PFNGLUNIFORM2IPROC glUniform2i;
@@ -75,6 +80,7 @@ namespace rut
             LOAD_FUNC(glDeleteBuffers);
             LOAD_FUNC(glBindBuffer);
             LOAD_FUNC(glBufferData);
+            LOAD_FUNC(glBindBufferBase);
 
             LOAD_FUNC(glVertexAttribPointer);
             LOAD_FUNC(glVertexAttribIPointer);
@@ -100,6 +106,8 @@ namespace rut
             LOAD_FUNC(glGetProgramInfoLog);
             LOAD_FUNC(glGetActiveUniformName);
             LOAD_FUNC(glGetUniformLocation);
+            LOAD_FUNC(glGetUniformBlockIndex);
+            LOAD_FUNC(glUniformBlockBinding);
 
             LOAD_FUNC(glUniform1i);
             LOAD_FUNC(glUniform1f);
