@@ -160,8 +160,6 @@ private:
 int main()
 {
     rut::Api::ChooseDefaults();
-    rut::Api::SetContextApi(rut::CONTEXT_API_KHR_SURFACE);
-    rut::Api::SetRenderApi(rut::RENDER_API_VULKAN);
     rut::Api::CheckCompatibility();
     rut::Api::PrintInfo();
 

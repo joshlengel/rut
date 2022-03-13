@@ -12,6 +12,7 @@
 #include<GL/gl.h>
 #include<GL/glext.h>
 #elif defined(RUT_PLATFORM_WINDOWS)
+#include<Windows.h>
 #include<GL/gl.h>
 #include<GL/glext.h>
 #endif

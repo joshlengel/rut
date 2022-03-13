@@ -2,6 +2,9 @@
 /build
 /lib
 /example/rut_example*
+/example/Debug
+/example/Release
+desktop.ini
 /src/impl/api
 
 # config

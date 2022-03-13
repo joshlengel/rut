@@ -44,6 +44,9 @@ namespace rut
                 glEnableVertexAttribArray(index);
                 ++index;
             }
+
+            m_num_vertices = 0;
+            m_num_indices = 0;
         }
 
         OpenGLMesh::~OpenGLMesh()

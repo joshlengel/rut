@@ -50,7 +50,7 @@ namespace rut
 
             std::vector<VkSemaphore> image_available_sems, render_finished_sems;
             std::vector<VkFence> in_flight_fences;
-            uint32_t current_frame;
+            uint32_t current_frame = 0;
             bool swapchain_renderable = false;
         };
 

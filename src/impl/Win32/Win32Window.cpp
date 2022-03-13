@@ -13,7 +13,7 @@
 #include"impl/OpenGL/OpenGLUtils.h"
 #endif
 #ifdef RUT_HAS_VULKAN
-#include"impl/Vulkan/VulkanX11Context.h"
+#include"impl/Vulkan/VulkanWin32Context.h"
 #include"impl/Vulkan/VulkanUtils.h"
 #endif
 
@@ -60,6 +60,10 @@ namespace rut
             if (m_context_api == CONTEXT_API_EGL)
                 m_context = new EGLContext(m_instance, m_window);
 #endif
+#ifdef RUT_HAS_VULKAN
+            if (m_context_api == CONTEXT_API_KHR_SURFACE)
+                m_context = new VulkanWin32Context(m_instance, m_window, m_props.width, m_props.height);
+#endif
         }
 
         Win32Window::~Win32Window()
@@ -77,7 +81,7 @@ namespace rut
             Win32Window *win = reinterpret_cast<Win32Window*>(GetWindowLongPtr(window, GWLP_USERDATA));
             switch (message)
             {
-                case WM_DESTROY:
+                case WM_CLOSE:
                 {
                     WindowClosedEvent event(win->shared_from_this());
                     win->m_handler(event);

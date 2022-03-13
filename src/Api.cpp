@@ -67,10 +67,10 @@ namespace rut
         s_context_api = CONTEXT_API_EGL;
 #endif
 #endif
+#endif
 #ifdef RUT_HAS_VULKAN
 		s_render_api = RENDER_API_VULKAN;
 		s_context_api = CONTEXT_API_KHR_SURFACE;
-#endif
 #endif
     }
 

@@ -7,7 +7,6 @@
 
 #include<stdexcept>
 #include<string_view>
-#include<iostream>
 
 static const GLenum SHADER_TYPE_GLENUM[] =
 {
@@ -112,7 +111,7 @@ namespace rut
 
         void OpenGLShaderProgram::BindUniformBuffer(uint32_t binding, std::shared_ptr<UniformBuffer> buffer)
         {
-            glBindBufferBase(GL_UNIFORM_BUFFER, m_binding_point_indices[binding], static_cast<GLuint>(buffer->GetHandle()));
+            glBindBufferBase(GL_UNIFORM_BUFFER, binding, static_cast<GLuint>(buffer->GetHandle()));
         }
 
         uint64_t OpenGLShaderProgram::GetHandle() const { return m_id; }
