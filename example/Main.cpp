@@ -51,7 +51,7 @@ static const std::string FRAGMENT_SOURCE = R"(
     };
 
     void main() {
-        fragColor = vec4(_uv.x, 1.0 - _uv.y, 0.0, 1.0);
+        fragColor = vec4(color, 1.0);
     }
 )";
 
@@ -88,8 +88,8 @@ public:
         };
         shader_props.props.uniform_bindings =
         {
-            { 0, "VertexUniforms", rut::ST_VERTEX, {{ "projection", rut::VT_MAT4 }} },
-            { 1, "FragUniforms", rut::ST_FRAGMENT, {{ "color", rut::VT_FVEC3 }} }
+            { 0, "VertexUniforms", rut::ST_VERTEX, { { "projection", rut::VT_MAT4 } } },
+            { 1, "FragUniforms", rut::ST_FRAGMENT, { { "color", rut::VT_FVEC3 } } }
         };
 
         m_shader = rut::ShaderProgram::Create(m_window->GetContext(), shader_props);
@@ -160,6 +160,8 @@ private:
 int main()
 {
     rut::Api::ChooseDefaults();
+    rut::Api::SetContextApi(rut::CONTEXT_API_KHR_SURFACE);
+    rut::Api::SetRenderApi(rut::RENDER_API_VULKAN);
     rut::Api::CheckCompatibility();
     rut::Api::PrintInfo();
 

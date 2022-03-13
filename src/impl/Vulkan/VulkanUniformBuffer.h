@@ -23,11 +23,11 @@ namespace rut
         class VulkanUniformBuffer : public UniformBuffer
         {
         public:
-            VulkanUniformBuffer(Context *context, const VertexLayout &layout);
-            VulkanUniformBuffer(Context *context, VertexLayout &&layout);
+            VulkanUniformBuffer(Context *context, const UniformLayout &layout);
+            VulkanUniformBuffer(Context *context, UniformLayout &&layout);
             virtual ~VulkanUniformBuffer();
 
-            virtual const VertexLayout &GetLayout() const override;
+            virtual const UniformLayout &GetLayout() const override;
 
             virtual void Map() override;
             virtual void Unmap() override;
@@ -41,22 +41,22 @@ namespace rut
             virtual void SetVariable(const std::string &name, const glm::vec4 &v) override;
             virtual void SetVariable(const std::string &name, const glm::mat3 &m) override;
             virtual void SetVariable(const std::string &name, const glm::mat4 &m) override;
-            virtual void SetVariable(const std::string &name, uint32_t num_elements, const int *i) override;
-            virtual void SetVariable(const std::string &name, uint32_t num_elements, const float *f) override;
-            virtual void SetVariable(const std::string &name, uint32_t num_elements, const glm::ivec2 *v) override;
-            virtual void SetVariable(const std::string &name, uint32_t num_elements, const glm::vec2 *v) override;
-            virtual void SetVariable(const std::string &name, uint32_t num_elements, const glm::ivec3 *v) override;
-            virtual void SetVariable(const std::string &name, uint32_t num_elements, const glm::vec3 *v) override;
-            virtual void SetVariable(const std::string &name, uint32_t num_elements, const glm::ivec4 *v) override;
-            virtual void SetVariable(const std::string &name, uint32_t num_elements, const glm::vec4 *v) override;
-            virtual void SetVariable(const std::string &name, uint32_t num_elements, const glm::mat3 *m) override;
-            virtual void SetVariable(const std::string &name, uint32_t num_elements, const glm::mat4 *m) override;
+            virtual void SetVariable(const std::string &name, const int *i) override;
+            virtual void SetVariable(const std::string &name, const float *f) override;
+            virtual void SetVariable(const std::string &name, const glm::ivec2 *v) override;
+            virtual void SetVariable(const std::string &name, const glm::vec2 *v) override;
+            virtual void SetVariable(const std::string &name, const glm::ivec3 *v) override;
+            virtual void SetVariable(const std::string &name, const glm::vec3 *v) override;
+            virtual void SetVariable(const std::string &name, const glm::ivec4 *v) override;
+            virtual void SetVariable(const std::string &name, const glm::vec4 *v) override;
+            virtual void SetVariable(const std::string &name, const glm::mat3 *m) override;
+            virtual void SetVariable(const std::string &name, const glm::mat4 *m) override;
 
             virtual uint64_t GetHandle() const override;
         
         private:
             VulkanData *m_data;
-            VertexLayout m_layout;
+            UniformLayout m_layout;
             VulkanUniformBufferData m_buffer_data;
             void *m_mapped_data;
 

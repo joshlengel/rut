@@ -13,7 +13,7 @@
 
 namespace rut
 {
-    std::shared_ptr<rut::UniformBuffer> rut::UniformBuffer::Create(Context *context, const VertexLayout &layout)
+    std::shared_ptr<rut::UniformBuffer> rut::UniformBuffer::Create(Context *context, const UniformLayout &layout)
     {
         switch (Api::GetRenderApi())
         {
@@ -34,7 +34,7 @@ namespace rut
         }
     }
 
-    std::shared_ptr<rut::UniformBuffer> rut::UniformBuffer::Create(Context *context, VertexLayout &&layout)
+    std::shared_ptr<rut::UniformBuffer> rut::UniformBuffer::Create(Context *context, UniformLayout &&layout)
     {
         switch (Api::GetRenderApi())
         {

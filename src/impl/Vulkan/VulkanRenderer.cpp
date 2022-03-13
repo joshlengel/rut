@@ -102,8 +102,8 @@ namespace rut
                 VkVertexInputAttributeDescription attribute_desc{};
                 attribute_desc.binding = 0;
                 attribute_desc.location = index++;
-                attribute_desc.offset = item.offset;
-                attribute_desc.format = VERTEX_TYPE_TO_VK_FORMAT[item.type];
+                attribute_desc.offset = item.GetOffset();
+                attribute_desc.format = VERTEX_TYPE_TO_VK_FORMAT[item.GetType()];
                 attribute_descs.push_back(attribute_desc);
             }
 

@@ -8,21 +8,83 @@
 #include<algorithm>
 #include<cstring>
 
+static const uint32_t VERTEX_TYPE_BYTES[] =
+{
+    4, 4, 8, 8, 12, 12, 16, 16, 44, 64
+};
+
+static const uint32_t VERTEX_TYPE_COUNTS[] =
+{
+    1, 1, 2, 2, 3, 3, 4, 4, 9, 16
+};
+
 namespace rut
 {
     namespace impl
     {
-        VulkanUniformBuffer::VulkanUniformBuffer(Context *context, const VertexLayout &layout):
+        VulkanUniformBuffer::VulkanUniformBuffer(Context *context, const UniformLayout &layout):
             m_layout(layout)
         { Init(context); }
 
-        VulkanUniformBuffer::VulkanUniformBuffer(Context *context, VertexLayout &&layout):
+        VulkanUniformBuffer::VulkanUniformBuffer(Context *context, UniformLayout &&layout):
             m_layout(std::move(layout))
         { Init(context); }
 
         void VulkanUniformBuffer::Init(Context *context)
         {
             m_data = reinterpret_cast<VulkanData*>(context->GetHandle());
+
+            // Setup layout
+            uint32_t offset = 0;
+            for (auto &item : m_layout)
+            {
+                uint32_t alignment;
+                switch (item->GetType())
+                {
+                    case VT_INT:
+                    case VT_FLOAT:
+                        alignment = 4;
+                        break;
+                    
+                    case VT_IVEC2:
+                    case VT_FVEC2:
+                        alignment = 8;
+                        break;
+
+                    case VT_IVEC3:
+                    case VT_FVEC3:
+                    case VT_IVEC4:
+                    case VT_FVEC4:
+                    case VT_MAT3:
+                    case VT_MAT4:
+                        alignment = 16;
+                        break;
+                }
+
+                // Alignment
+                uint32_t low_boundary = (offset / alignment) * alignment;
+                if (low_boundary < offset)
+                {
+                    // Add padding
+                    offset = low_boundary + alignment;
+                }
+
+                item->SetOffset(offset);
+                item->SetSize(VERTEX_TYPE_BYTES[item->GetType()]);
+                if (item->GetLength() > 1)
+                {
+                    dynamic_cast<UniformArrayLayoutItem*>(item)->SetStride(alignment);
+                    item->SetSize(alignment * item->GetLength());
+                }
+                if (item->GetType() == VT_MAT3 || item->GetType() == VT_MAT4)
+                {
+                    UniformMatrixLayoutItem *mat_item = dynamic_cast<UniformMatrixLayoutItem*>(item);
+                    mat_item->SetStride(4 * sizeof(float));
+                }
+
+                offset += item->GetSize();
+            }
+            m_layout.SetStride(offset);
 
             VulkanQueueFamilyIndices indices;
             GetVulkanQueueFamilies(m_data->physical_device, m_data->surface, indices);
@@ -65,36 +127,36 @@ namespace rut
             }
         }
 
-        const VertexLayout &VulkanUniformBuffer::GetLayout() const { return m_layout; }
+        const UniformLayout &VulkanUniformBuffer::GetLayout() const { return m_layout; }
 
         void VulkanUniformBuffer::Map() { vkMapMemory(m_data->device, m_buffer_data.memorys[m_data->current_frame], 0, m_layout.GetStride(), 0, &m_mapped_data); }
         void VulkanUniformBuffer::Unmap() { vkUnmapMemory(m_data->device, m_buffer_data.memorys[m_data->current_frame]); }
         
-#define SET_UNIFORM(name, num_elements, value)\
-auto itr = std::find_if(m_layout.begin(), m_layout.end(), [&](const VertexLayoutItem &item){ return item.name == name; });\
+#define SET_UNIFORM(name, value)\
+auto itr = std::find_if(m_layout.begin(), m_layout.end(), [&](LayoutItem *item){ return item->GetName() == name; });\
 if (itr == m_layout.end()) return;\
-std::memcpy(reinterpret_cast<char*>(m_mapped_data) + itr->offset, value, num_elements * sizeof(*value));
+(*itr)->Write(reinterpret_cast<uint8_t*>(m_mapped_data) + (*itr)->GetOffset(), value);
 
-        void VulkanUniformBuffer::SetVariable(const std::string &name, int i)               { SET_UNIFORM(name, 1, &i); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, float f)             { SET_UNIFORM(name, 1, &f); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::ivec2 &v) { SET_UNIFORM(name, 1, &v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::vec2 &v)  { SET_UNIFORM(name, 1, &v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::ivec3 &v) { SET_UNIFORM(name, 1, &v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::vec3 &v)  { SET_UNIFORM(name, 1, &v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::ivec4 &v) { SET_UNIFORM(name, 1, &v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::vec4 &v)  { SET_UNIFORM(name, 1, &v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::mat3 &m)  { SET_UNIFORM(name, 1, &m); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::mat4 &m)  { SET_UNIFORM(name, 1, &m); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, uint32_t num_elements, const int *i)        { SET_UNIFORM(name, num_elements, i); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, uint32_t num_elements, const float *f)      { SET_UNIFORM(name, num_elements, f); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, uint32_t num_elements, const glm::ivec2 *v) { SET_UNIFORM(name, num_elements, v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, uint32_t num_elements, const glm::vec2 *v)  { SET_UNIFORM(name, num_elements, v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, uint32_t num_elements, const glm::ivec3 *v) { SET_UNIFORM(name, num_elements, v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, uint32_t num_elements, const glm::vec3 *v)  { SET_UNIFORM(name, num_elements, v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, uint32_t num_elements, const glm::ivec4 *v) { SET_UNIFORM(name, num_elements, v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, uint32_t num_elements, const glm::vec4 *v)  { SET_UNIFORM(name, num_elements, v); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, uint32_t num_elements, const glm::mat3 *m)  { SET_UNIFORM(name, num_elements, m); }
-        void VulkanUniformBuffer::SetVariable(const std::string &name, uint32_t num_elements, const glm::mat4 *m)  { SET_UNIFORM(name, num_elements, m); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, int i)               { SET_UNIFORM(name, &i); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, float f)             { SET_UNIFORM(name, &f); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::ivec2 &v) { SET_UNIFORM(name, &v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::vec2 &v)  { SET_UNIFORM(name, &v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::ivec3 &v) { SET_UNIFORM(name, &v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::vec3 &v)  { SET_UNIFORM(name, &v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::ivec4 &v) { SET_UNIFORM(name, &v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::vec4 &v)  { SET_UNIFORM(name, &v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::mat3 &m)  { SET_UNIFORM(name, &m); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::mat4 &m)  { SET_UNIFORM(name, &m); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const int *i)        { SET_UNIFORM(name, i); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const float *f)      { SET_UNIFORM(name, f); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::ivec2 *v) { SET_UNIFORM(name, v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::vec2 *v)  { SET_UNIFORM(name, v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::ivec3 *v) { SET_UNIFORM(name, v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::vec3 *v)  { SET_UNIFORM(name, v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::ivec4 *v) { SET_UNIFORM(name, v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::vec4 *v)  { SET_UNIFORM(name, v); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::mat3 *m)  { SET_UNIFORM(name, m); }
+        void VulkanUniformBuffer::SetVariable(const std::string &name, const glm::mat4 *m)  { SET_UNIFORM(name, m); }
 
         uint64_t VulkanUniformBuffer::GetHandle() const { return reinterpret_cast<uint64_t>(&m_buffer_data); }
     }

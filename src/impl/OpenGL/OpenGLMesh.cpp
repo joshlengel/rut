@@ -36,10 +36,10 @@ namespace rut
             size_t index = 0;
             for (const auto &item : m_layout)
             {
-                if (VERTEX_TYPE_IS_FLOAT[item.type])
-                    glVertexAttribPointer(index, item.count, VERTEX_TYPE_GLENUM[item.type], GL_FALSE, m_layout.GetStride(), reinterpret_cast<void*>(item.offset));
+                if (VERTEX_TYPE_IS_FLOAT[item.GetType()])
+                    glVertexAttribPointer(index, item.GetCount(), VERTEX_TYPE_GLENUM[item.GetType()], GL_FALSE, m_layout.GetStride(), reinterpret_cast<void*>(item.GetOffset()));
                 else
-                    glVertexAttribIPointer(index, item.count, VERTEX_TYPE_GLENUM[item.type], m_layout.GetStride(), reinterpret_cast<void*>(item.offset));
+                    glVertexAttribIPointer(index, item.GetCount(), VERTEX_TYPE_GLENUM[item.GetType()], m_layout.GetStride(), reinterpret_cast<void*>(item.GetOffset()));
                 
                 glEnableVertexAttribArray(index);
                 ++index;

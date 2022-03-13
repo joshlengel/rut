@@ -42,7 +42,7 @@ namespace rut
         spirv_cross::CompilerGLSL compiler(reinterpret_cast<uint32_t*>(blob.data), blob.bytes / sizeof(uint32_t));
         spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
-        if (type != rut::ST_VERTEX)
+        /*if (type != rut::ST_VERTEX)
         {
             for (auto &input : resources.stage_inputs)
             {
@@ -57,6 +57,10 @@ namespace rut
                 compiler.unset_decoration(output.id, spv::DecorationBinding);
                 compiler.unset_decoration(output.id, spv::DecorationDescriptorSet);
             }
+        }*/
+        for (auto &uniform_buffers : resources.uniform_buffers)
+        {
+            compiler.set_decoration(uniform_buffers.id, spv::DecorationGLSLShared, 1);
         }
 
         spirv_cross::CompilerGLSL::Options options{};
